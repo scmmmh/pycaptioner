@@ -1,0 +1,17 @@
+[Meta]
+name = at_corner.urban
+
+[Model]
+type=spline
+method=natural
+
+[Extent]
+distance=140
+
+[Data]
+0=9
+9=9
+26=7
+55=4
+75=3
+141=1

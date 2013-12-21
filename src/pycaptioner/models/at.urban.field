@@ -1,0 +1,15 @@
+[Meta]
+name = at.urban
+
+[Model]
+type=spline
+method=natural
+
+[Extent]
+distance=180
+
+[Data]
+0=9
+39=6
+106=3
+179=1
