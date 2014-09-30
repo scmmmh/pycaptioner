@@ -13,6 +13,7 @@ URBAN_ONE_POINT_MODELS = ['at_corner.urban', 'at.urban', 'next_to.urban', 'near.
 RURAL_TWO_POINT_MODELS = ['between.rural']
 URBAN_TWO_POINT_MODELS = ['between.urban']
 
+
 def main():
     proj = Proj(init='epsg:32630')
     for feature in GAZETTEER:
@@ -43,6 +44,7 @@ def main():
                 if feature1['dc_type'] != JUNCTION and feature2['dc_type'] != JUNCTION and feature1['dc_title'] != feature2['dc_title']:
                     baseline = feature2['geo_lonlat'] - feature1['geo_lonlat']
                     pos = point - feature1['geo_lonlat']
-                    print baseline, pos
+                    print(baseline, pos)
                     configurations.append((('between.rural', 1), feature1, feature2))
-    print language.generate_caption(generator.urban_caption(configurations))
+    print(language.generate_caption(generator.urban_caption(configurations)))
+
