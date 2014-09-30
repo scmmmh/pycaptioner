@@ -1,15 +1,20 @@
 import logging
 import math
 import numpy
+import rpy2.robjects.packages
 import os
 
-from ConfigParser import SafeConfigParser
+from configparser import ConfigParser
 from pkg_resources import resource_stream
 from rpy2 import robjects
 
+
 def load(field_name):
-    config = SafeConfigParser()
-    config.readfp(resource_stream('pycaptioner', 'models/%s.field' % (field_name)))
+    config = ConfigParser()
+    config_data = ''
+    for line in resource_stream('pycaptioner', 'models/%s.field' % (field_name)):
+        config_data = config_data + line.decode('utf8')
+    config.read_string(config_data)
     field_type = config.get('Model', 'type')
     if field_type == 'spline':
         return SplineModel(config)
@@ -18,8 +23,10 @@ def load(field_name):
     else:
         return None
 
+
 def dist(x, y):
     return math.sqrt(math.pow(x, 2) + math.pow(y, 2))
+
 
 class SplineModel(object):
     
@@ -40,11 +47,13 @@ class SplineModel(object):
         else:
             return max(0, min(1, self.spline(dist(x, y))[0]))
 
+
 def point_in_lists(x, y, x_list, y_list):
     for idx in range(0, min(len(x_list), len(y_list))):
         if abs(x_list[idx] - x) < 0.01 and abs(y_list[idx] - y) < 0.01:
             return True
     return False
+
 
 class KrigingModel(object):
     
@@ -126,7 +135,7 @@ class KrigingModel(object):
                 return 0
         fx = self.extent_x / 2 + math.floor(x / self.cell_size)
         fy = self.extent_y / 2 + math.floor(y / self.cell_size)
-        if fx >= 0 and fx < self.extent_x and fy >= 0 and fy < self.extent_y:
+        if 0 <= fx < self.extent_x and 0 <= fy < self.extent_y:
             return self.data[fx,fy]
         else:
             return 0
