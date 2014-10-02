@@ -11,6 +11,7 @@ version = '0.1'
 requires = [
             'rpy2',
             'pyproj',
+            'shapely',
             'numpy'
 ]
 
