@@ -105,7 +105,7 @@ class KrigingModel(object):
             cellsize = robjects.FloatVector([self.cell_size, self.cell_size])
             cells = robjects.FloatVector([self.extent_x, self.extent_y])
             spatial_grid = robjects.r.SpatialGrid(robjects.r.GridTopology(**{'cellcentre.offset': cellcentre, 'cellsize': cellsize, 'cells.dim': cells}))
-            fml = robjects.Formula('conf~1')
+            fml = robjects.Formula('confidence~1')
             fml.environment['conf'] = data[2]
             v = robjects.r.variogram(fml, data2)
             vgm = robjects.r.vgm(model=config.get('Model', 'name'),
@@ -113,7 +113,7 @@ class KrigingModel(object):
                                  range=config.get('Model', 'range'),
                                  psill=config.get('Model', 'sill'))
             ovgm = robjects.r['fit.variogram'](v, vgm)
-            krige = robjects.r.krige(robjects.Formula('conf~1'), data2, spatial_grid, model=ovgm)
+            krige = robjects.r.krige(robjects.Formula('confidence~1'), data2, spatial_grid, model=ovgm)
             robjects.r['write.asciigrid'](krige, '%s.ag' % (config.get('Meta', 'name')))
             logging.debug('KrigingModel calculated')
         self.data = numpy.zeros(dtype='float', shape=(self.extent_x, self.extent_y))

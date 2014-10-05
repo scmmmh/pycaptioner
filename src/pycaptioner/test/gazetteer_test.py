@@ -27,6 +27,9 @@ def vlad_urban_lookup_test():
         if line['category'] == 'urban':
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), 'poi')
             tools.assert_is_not_none(points)
+            for feature in points:
+                tools.assert_less_equal(feature['tripod_score'], 1)
+                tools.assert_greater_equal(feature['tripod_score'], 0)
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), 'way')
             tools.assert_is_not_none(points)
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), 'contain')
@@ -53,6 +56,9 @@ def vlad_rural_lookup_test():
         if line['category'] == 'rural':
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), 'poi')
             tools.assert_is_not_none(points)
+            for feature in points:
+                tools.assert_less_equal(feature['tripod_score'], 1)
+                tools.assert_greater_equal(feature['tripod_score'], 0)
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), 'way')
             tools.assert_is_not_none(points)
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), 'contain')
