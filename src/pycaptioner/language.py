@@ -45,7 +45,7 @@ def generate_phrase(element, last_preposition):
             return 'in', ', %s' % (add_determiner(element[1]))
         else:
             return 'in', ' in %s' % (add_determiner(element[1]))
-    return ''
+    return '', element[1]
 
 def generate_caption(elements):
     phrases = []

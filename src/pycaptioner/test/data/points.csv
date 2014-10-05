@@ -1,11 +1,11 @@
-"category","id","title","lat","lon"
-"rural",1786893,"Burn at Channerwick",59.991854,-1.275172
-"rural",3507414,"M6 northbound at Gillhead",54.870496,-2.876161
-"rural",1130935,"Conservation pile near Nether Mains",57.094895,-2.610599
-"rural",1097323,"Maersk Flanders at Felixstowe",51.948271,1.304057
-"rural",3739239,"Autumn scene near Spitchwick",50.530122,-3.813967
-"urban",3802160,"Footpath south of Whorlton Hall",55.009990,-1.708825
-"urban",1154282,"Semi-detached houses at the junction of The Chase and The Oval",51.238467,-0.592842
-"urban",2206536,"Wakeley Hill near Colton Hills, Staffordshire",52.553903,-2.146663
-"urban",3666884,"The Great Marquess at Glasgow Central",55.856800,-4.258494
-"urban",716096,"Double gates near Hortham farm",51.556953,-2.543455
+"category","id","title","subject","lat","lon"
+"rural",1786893,"Burn at Channerwick","Burn",59.991854,-1.275172
+"rural",3507414,"M6 northbound at Gillhead","M6 northbound", 54.870496,-2.876161
+"rural",1130935,"Conservation pile near Nether Mains","Conservation pile",57.094895,-2.610599
+"rural",1097323,"Maersk Flanders at Felixstowe","Maersk Flanders",51.948271,1.304057
+"rural",3739239,"Autumn scene near Spitchwick","Autumn scene",50.530122,-3.813967
+"urban",3802160,"Footpath south of Whorlton Hall","Footpath",55.009990,-1.708825
+"urban",1154282,"Semi-detached houses at the junction of The Chase and The Oval","Semi-detached houses",51.238467,-0.592842
+"urban",2206536,"Wakeley Hill near Colton Hills, Staffordshire","Wakely Hill",52.553903,-2.146663
+"urban",3666884,"The Great Marquess at Glasgow Central","The Great Marquess",55.856800,-4.258494
+"urban",716096,"Double gates near Hortham farm","Double gates near Hortham farm",51.556953,-2.543455

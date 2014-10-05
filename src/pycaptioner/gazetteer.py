@@ -5,6 +5,7 @@ u"""
 """
 import numpy
 
+from copy import deepcopy
 from re import match
 from shapely import geometry, wkt
 
@@ -61,6 +62,14 @@ class VladGazetteer(object):
                                 'dc_source': None,
                                 'tripod_score': 0}
                         self._gazetteer[reference]['contain'].append(topo)
+        for key in self._gazetteer.keys():
+            max_value = 0
+            for feature in self._gazetteer[key]['poi']:
+                max_value = max(max_value, feature['tripod_score'])
+            if max_value > 0:
+                max_value = float(max_value)
+                for feature in self._gazetteer[key]['poi']:
+                    feature['tripod_score'] = feature['tripod_score'] / max_value
 
     def __len__(self):
         total = 0
@@ -72,6 +81,6 @@ class VladGazetteer(object):
     def __call__(self, point, category):
         reference = '%f::%f' % (point.x, point.y)
         if reference in self._gazetteer and category in self._gazetteer[reference]:
-            return self._gazetteer[reference][category]
+            return deepcopy(self._gazetteer[reference][category])
         else:
             return None
