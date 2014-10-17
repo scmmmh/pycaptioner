@@ -57,6 +57,12 @@ def urban_caption(configurations):
     elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'Wales', 'dc_type': COUNTRY, 'tripod_score': 1}))
     elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'United Kingdom', 'dc_type': COUNTRY, 'tripod_score': 1}))
     return elements
- 
+
+def top_near_captions(configurations):
+    return [conf for conf in configurations if conf[0][0] == 'near.rural' and weighted_score(conf) > 0.8]
+
 def rural_caption(configurations):
+    near_configurations = top_near_captions(configurations)
+    if near_configurations:
+        return [best_configuration(near_configurations)]
     return [best_configuration(configurations)]

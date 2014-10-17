@@ -20,6 +20,8 @@ def load(field_name):
         return SplineModel(config)
     elif field_type == 'kriging':
         return KrigingModel(config)
+    elif field_type == 'kriging.bireference':
+        return BiReferenceKrigingModel(config)
     else:
         return None
 
@@ -59,10 +61,10 @@ class KrigingModel(object):
     
     def __init__(self, config):
         logging.debug('Instantiating KrigingModel %s' % (config.get('Meta', 'name')))
-        self.centre_x = float(config.getfloat('Extent', 'centre_x'))
-        self.centre_y = float(config.getfloat('Extent', 'centre_y'))
         self.extent_x = config.getint('Extent', 'extent_x')
         self.extent_y = config.getint('Extent', 'extent_y')
+        self.centre_x = config.getfloat('Extent', 'centre_x')
+        self.centre_y = config.getfloat('Extent', 'centre_y')
         self.cell_size = config.getint('Extent', 'cell_size')
         if config.has_section('Post-process') and config.has_option('Post-process', 'filter'):
             self.filter = config.get('Post-process', 'filter')
@@ -124,6 +126,7 @@ class KrigingModel(object):
         self.data = (self.data - 1) / 9.0
     
     def __call__(self, x, y):
+        logging.debug('Reading value at %f, %f' % (x, y))
         if self.filter:
             if self.filter == 'north-plane' and y > 0:
                 return 0
@@ -133,9 +136,28 @@ class KrigingModel(object):
                 return 0
             elif self.filter == 'west-plane' and x < 0:
                 return 0
-        fx = self.extent_x / 2 + math.floor(x / self.cell_size)
-        fy = self.extent_y / 2 + math.floor(y / self.cell_size)
+        fx = (self.extent_x / 2) + math.floor(x / self.cell_size)
+        fy = (self.extent_y / 2) + math.floor(y / self.cell_size)
         if 0 <= fx < self.extent_x and 0 <= fy < self.extent_y:
+            logging.debug('Reading cell at %i, %i' % (fx, fy))
             return self.data[fx,fy]
         else:
             return 0
+
+class BiReferenceKrigingModel(KrigingModel):
+
+    def __init__(self, config):
+        super(BiReferenceKrigingModel, self).__init__(config)
+        self.reference1_x = config.getfloat('Extent', 'reference1_x')
+        self.reference2_x = config.getfloat('Extent', 'reference2_x')
+
+
+    def __call__(self, r2x, r2y, x, y):
+        h = math.sqrt(math.pow(r2x, 2) + math.pow(r2y, 2))
+        angle = math.asin(r2y / h)
+        scale = (self.reference2_x - self.reference1_x) / h
+        point = numpy.array([x, y], dtype='float').dot(numpy.array([[numpy.cos(angle), -numpy.sin(angle)],
+                                                                  [numpy.sin(angle), numpy.cos(angle)]]))
+        point = point * scale - numpy.array([self.centre_x, self.centre_y])
+        value = super().__call__(point[0], point[1])
+        return value
