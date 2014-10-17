@@ -12,7 +12,7 @@ from pycaptioner import models
 MODELS = {'rural': {'one_poi': ['near.rural', 'east.rural', 'north.rural', 'west.rural', 'south.rural'],
                     'two_poi': ['between.rural']},
           'urban': {'one_poi': ['at_corner.urban', 'at.urban', 'next_to.urban', 'near.urban'],
-                    'two_poi': []}}
+                    'two_poi': ['between.urban']}}
 
 
 def generate_configurations(reference, gaz, context):
@@ -26,8 +26,6 @@ def generate_configurations(reference, gaz, context):
         model = models.load(model_name)
         for feature in pois:
             value = model(*(reference - feature['geo_lonlat']))
-            if model_name != 'near.rural':
-                value = value * 0.9 # TODO: This is a hack that needs to be addressed
             if value >= 0.6:
                 configurations.append(((model_name, value), feature))
     return configurations

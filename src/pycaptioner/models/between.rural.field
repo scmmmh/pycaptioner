@@ -2,7 +2,7 @@
 name = between.rural
 
 [Model]
-type = kriging
+type = kriging.bireference
 name = Sph
 nugget = 1
 range = 12000
@@ -14,6 +14,8 @@ extent_y = 344
 centre_x = 38187.039
 centre_y = 0
 cell_size = 100
+reference1_x = 0.0
+reference2_x = 76374.0784104502
 
 [Pre-process]
 mirror = y
