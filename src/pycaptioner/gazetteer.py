@@ -3,32 +3,79 @@ u"""
 
 .. moduleauthor:: Mark Hall <mark.hall@mail.room3b.eu>
 """
+import logging
 import numpy
 
 from copy import deepcopy
+from csv import DictReader
+from io import TextIOWrapper
+from pkg_resources import resource_stream
 from re import match
 from shapely import geometry, wkt
 
+UNKNOWN = 'UNKNOWN'
 POI = 'POI'
 JUNCTION = 'JUNCTION'
-TOWN = 'TOWN'
-COUNTRY = 'COUNTRY'
+POPULATED_PLACE = 'POPULATED_PLACE'
+NATURAL_FEATURE = 'NATURAL_FEATURE'
+AREA = 'AREA'
 
-GAZETTEER = [{'geo_lonlat': numpy.array((-2.6001763343811035, 53.38953524087438)),
-              'dc_title': 'Warrington Town Hall',
-              'dc_type': POI,
-              'tripod_score': 1},
-             {'geo_lonlat': numpy.array((-2.600938081741333, 53.38832593138862)),
-              'dc_title': 'Baptist Church',
-              'dc_type': POI,
-              'tripod_score': 0.8},
-             {'geo_lonlat': numpy.array((-2.600712776184082, 53.38865225638026)),
-              'dc_title': 'Sankey Street and Arpley Street',
-              'dc_type': JUNCTION,
-              'tripod_score': 1}]
+SCORE_MAPPINGS = {'LOW': 1,
+                  'MEDIUM': 2,
+                  'HIGH': 3}
+
+TYPE_MAPPINGS = {}
+reader = DictReader(TextIOWrapper(resource_stream('pycaptioner', 'data/gazetteer_type_mappings.csv')))
+for line in reader:
+    if line['source'].lower() not in TYPE_MAPPINGS:
+        TYPE_MAPPINGS[line['source'].lower()] = {}
+    if line['source_type'].lower() not in TYPE_MAPPINGS[line['source'].lower()]:
+        TYPE_MAPPINGS[line['source'].lower()][line['source_type'].lower()] = {'main': line['target'],
+                                                                              'sub': line['source_type'].lower(),
+                                                                              'rural_score': SCORE_MAPPINGS[line['rural_score']],
+                                                                              'urban_score': SCORE_MAPPINGS[line['urban_score']]}
 
 
-class VladGazetteer(object):
+class LocationType(object):
+    
+    def __init__(self, source, source_type):
+        self.main_type = UNKNOWN
+        self.sub_type = None
+        self.rural_score = None
+        self.urban_score = None
+        if source:
+            source = source.lower()
+            if source_type:
+                source_type = source_type.lower()
+            else:
+                source_type = ''
+            if source in TYPE_MAPPINGS and source_type in TYPE_MAPPINGS[source]:
+                self.main_type = TYPE_MAPPINGS[source][source_type]['main']
+                self.main_type = TYPE_MAPPINGS[source][source_type]['sub']
+                self.rural_score = TYPE_MAPPINGS[source][source_type]['rural_score']
+                self.urban_score = TYPE_MAPPINGS[source][source_type]['urban_score']
+            else:
+                logging.debug('Missing type %s:%s' % (source, source_type))
+
+
+class Gazetteer(object):
+
+    def _lookup(self, point, **options):
+        return []
+
+    def __call__(self, point, **options):
+        features = []
+        for feature in self._lookup(point, **options):
+            feature['geo_type'] = LocationType(feature['dc_source'], feature['dc_type'])
+            features.append(feature)
+        if 'filter_urban_score' in options:
+            features = [p for p in features if p['geo_type'].urban_score > SCORE_MAPPINGS[options['filter_urban_score']]]
+        if 'filter_rural_score' in options:
+            features = [p for p in features if p['geo_type'].rural_score > SCORE_MAPPINGS[options['filter_rural_score']]]
+        return features
+
+
+class VladGazetteer(Gazetteer):
 
     def __init__(self, source):
         self._gazetteer = {}
@@ -78,9 +125,12 @@ class VladGazetteer(object):
                 total = total + len(points)
         return total
 
-    def __call__(self, point, category):
+    def _lookup(self, point, **options):
         reference = '%f::%f' % (point.x, point.y)
-        if reference in self._gazetteer and category in self._gazetteer[reference]:
-            return deepcopy(self._gazetteer[reference][category])
+        if reference in self._gazetteer:
+            if 'category' in options and options['category'] in self._gazetteer[reference]:
+                return deepcopy(self._gazetteer[reference][options['category']])
+            else:
+                return []
         else:
-            return None
+            return []
