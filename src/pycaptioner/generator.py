@@ -16,6 +16,7 @@ def at_corner_configurations(configurations):
             max_config = configuration
     return max_config
 
+
 def at_corner_addons(configurations):
     max_value = 0.7
     max_config = None
@@ -35,7 +36,8 @@ def at_corner_addons(configurations):
 
 
 def weighted_score(configuration):
-    return 0.98 * configuration[0][1] + 0.02 * configuration[1]['tripod_score']
+    return 0.98 * configuration['value'] + 0.02 * configuration['feature']['tripod_score']
+
 
 def best_configuration(configurations):
     max_value = 0
@@ -43,6 +45,7 @@ def best_configuration(configurations):
         if weighted_score(configuration) >= max_value:
             max_value = weighted_score(configuration)
     return choice([configuration for configuration in configurations if weighted_score(configuration) >= max_value])
+
 
 def urban_caption(configurations):
     elements = []
@@ -57,8 +60,10 @@ def urban_caption(configurations):
     elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'United Kingdom', 'dc_type': COUNTRY, 'tripod_score': 1}))
     return elements
 
+
 def top_near_captions(configurations):
-    return [conf for conf in configurations if conf[0][0] == 'near.rural' and weighted_score(conf) > 0.8]
+    return [conf for conf in configurations if conf['type'] == 'preposition' and conf['model'] == 'near.rural' and weighted_score(conf) > 0.8]
+
 
 def rural_caption(configurations):
     near_configurations = top_near_captions(configurations)

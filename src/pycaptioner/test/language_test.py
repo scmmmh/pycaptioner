@@ -26,7 +26,7 @@ def rural_configurations_test():
             configurations = generate_configurations(point, gaz, 'rural')
             caption = rural_caption(configurations)
             tools.assert_is_not_none(caption)
-            caption.insert(0, ('subject', line['subject']))
+            caption.insert(0, {'type': 'string', 'value': line['subject']})
             caption = generate_caption(caption)
             tools.assert_is_not_none(caption)
             print(caption)

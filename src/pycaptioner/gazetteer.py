@@ -69,9 +69,9 @@ class Gazetteer(object):
             feature['geo_type'] = LocationType(feature['dc_source'], feature['dc_type'])
             features.append(feature)
         if 'filter_urban_score' in options:
-            features = [p for p in features if p['geo_type'].urban_score > SCORE_MAPPINGS[options['filter_urban_score']]]
+            features = [p for p in features if p['geo_type'].urban_score >= SCORE_MAPPINGS[options['filter_urban_score']]]
         if 'filter_rural_score' in options:
-            features = [p for p in features if p['geo_type'].rural_score > SCORE_MAPPINGS[options['filter_rural_score']]]
+            features = [p for p in features if p['geo_type'].rural_score >= SCORE_MAPPINGS[options['filter_rural_score']]]
         return features
 
 
