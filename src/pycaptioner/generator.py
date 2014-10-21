@@ -7,7 +7,6 @@ import numpy
 
 from random import choice
 
-from pycaptioner.gazetteer import TOWN, COUNTRY
 
 def at_corner_configurations(configurations):
     max_value = 0
