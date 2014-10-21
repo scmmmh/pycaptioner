@@ -17,8 +17,8 @@ def rural_configurations_test():
     """Test loading Vlad's urban gazetteer"""
     gaz = VladGazetteer(TextIOWrapper(resource_stream('pycaptioner', 'test/data/gazetteer_rural.txt')))
     reader = DictReader(TextIOWrapper(resource_stream('pycaptioner', 'test/data/points.csv')))
-    line = next(reader)
-    point = geometry.Point(float(line['lon']), float(line['lat']))
-    configurations = generate_configurations(point, gaz, 'rural')
-    tools.assert_greater_equal(len(configurations), 0)
-
+    for line in reader:
+        if line['category'] == 'rural':
+            point = geometry.Point(float(line['lon']), float(line['lat']))
+            configurations = generate_configurations(point, gaz, 'rural')
+            tools.assert_greater_equal(len(configurations), 0)
