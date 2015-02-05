@@ -70,11 +70,11 @@ def filter_urban_test():
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), category='poi', filter_urban_score='MEDIUM')
             for feature in points:
                 lt = LocationType(feature['dc_source'], feature['dc_type'])
-                tools.assert_greater_equal(lt.rural_score, 2)
+                tools.assert_greater_equal(lt.urban_score, 2)
             points = gaz(geometry.Point(float(line['lon']), float(line['lat'])), category='poi', filter_urban_score='HIGH')
             for feature in points:
                 lt = LocationType(feature['dc_source'], feature['dc_type'])
-                tools.assert_greater_equal(lt.rural_score, 3)
+                tools.assert_greater_equal(lt.urban_score, 3)
 
 
 def vlad_rural_test():
