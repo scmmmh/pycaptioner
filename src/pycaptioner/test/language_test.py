@@ -24,9 +24,9 @@ def rural_configurations_test():
         if line['category'] == 'rural':
             point = geometry.Point(float(line['lon']), float(line['lat']))
             configurations = generate_configurations(point, gaz, 'rural')
+            configurations['subject'] = {'dc_title': line['subject']}
             caption = rural_caption(configurations)
             tools.assert_is_not_none(caption)
-            caption.insert(0, {'type': 'string', 'value': line['subject']})
             caption = generate_caption(caption)
             tools.assert_is_not_none(caption)
             print(caption)

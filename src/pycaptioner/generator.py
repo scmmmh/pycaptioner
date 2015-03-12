@@ -68,25 +68,15 @@ def filter_duplicates(configurations):
     return filtered
 
 
-def urban_caption(configurations):
-    elements = []
-    at_corner_element = at_corner_configurations(configurations)
-    if at_corner_element:
-        elements.append(at_corner_element)
-        elements.extend(at_corner_addons(configurations))
-    else:
-        elements.append(best_configuration(configurations))
-    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'Cardiff', 'dc_type': TOWN, 'tripod_score': 1}))
-    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'Wales', 'dc_type': COUNTRY, 'tripod_score': 1}))
-    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'United Kingdom', 'dc_type': COUNTRY, 'tripod_score': 1}))
-    return elements
-
-
 def filter_configurations(configurations, model, limit):
     return [conf for conf in configurations if conf['type'] == 'preposition' and conf['model'] == model and weighted_score(conf) > limit]
 
 
-def rural_caption(configurations):
+def filter_feature(configurations, feature):
+    return [config for config in configurations if config['feature']['dc_title'] != feature]
+
+
+def rural_best_relative(configurations):
     at_configurations = filter_configurations(configurations, 'at.rural', 0.6)
     if at_configurations:
         return [best_configuration(at_configurations)]
@@ -113,3 +103,38 @@ def rural_caption(configurations):
                 return [best_configuration(near_configurations)]
             else:
                 return [best_configuration(configurations)]
+
+
+def rural_caption(configurations):
+    caption = []
+    if 'subject' in configurations:
+        filter_feature(configurations['relative'], configurations['subject']['dc_title'])
+        caption.append({'type': 'string', 'value': configurations['subject']['dc_title']})
+    caption.extend(rural_best_relative(configurations['relative']))
+    if 'contain' in configurations and configurations['contain']:
+        admin_area = False
+        for config in configurations['contain']:
+            if config['geo_type']:
+                if config['geo_type'].main_type == 'ADMIN_1' or config['geo_type'].main_type == 'ADMIN_2' or config['geo_type'].main_type == 'ADMIN_3':
+                    if not admin_area:
+                        caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
+                        admin_area = True
+                else:
+                    caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
+    return caption
+
+
+def urban_caption(configurations):
+    elements = []
+    at_corner_element = at_corner_configurations(configurations)
+    if at_corner_element:
+        elements.append(at_corner_element)
+        elements.extend(at_corner_addons(configurations))
+    else:
+        elements.append(best_configuration(configurations))
+    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'Cardiff', 'dc_type': TOWN, 'tripod_score': 1}))
+    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'Wales', 'dc_type': COUNTRY, 'tripod_score': 1}))
+    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'United Kingdom', 'dc_type': COUNTRY, 'tripod_score': 1}))
+    return elements
+
+
