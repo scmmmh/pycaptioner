@@ -35,7 +35,7 @@ def generate_phrase(element, last_preposition):
         elif element['model'].startswith('next_to.'):
             return 'next to', ' next to %s' % (add_determiner(element['feature']))
         elif element['model'].startswith('between.'):
-            return 'between', ' between %s and %s' % (add_determiner(element['feature_start']), add_determiner(element['feature_end']))
+            return 'between', ' between %s and %s' % (add_determiner(element['feature'][0]), add_determiner(element['feature'][1]))
         elif element['model'].startswith('north.'):
             return 'north', ' north of %s' % (add_determiner(element['feature']))
         elif element['model'].startswith('east.'):
