@@ -51,11 +51,17 @@ class LocationType(object):
                 source_type = ''
             if source in TYPE_MAPPINGS and source_type in TYPE_MAPPINGS[source]:
                 self.main_type = TYPE_MAPPINGS[source][source_type]['main']
-                self.main_type = TYPE_MAPPINGS[source][source_type]['sub']
+                self.sub_type = TYPE_MAPPINGS[source][source_type]['sub']
                 self.rural_score = TYPE_MAPPINGS[source][source_type]['rural_score']
                 self.urban_score = TYPE_MAPPINGS[source][source_type]['urban_score']
             else:
-                logging.debug('Missing type %s:%s' % (source, source_type))
+                logging.warning('Missing type %s:%s' % (source, source_type))
+
+    def __repr__(self):
+        return 'LocationType(main_type=%s, sub_type=%s, urban_score=%s, rural_score=%s)' % (self.main_type,
+                                                                                            self.sub_type,
+                                                                                            self.urban_score,
+                                                                                            self.rural_score)
 
 
 class Gazetteer(object):
@@ -104,9 +110,9 @@ class VladGazetteer(Gazetteer):
                     m = match(r'([a-zA-Z ]+)\(([a-zA-Z -]+)\)', part.strip())
                     if m:
                         topo = {'geo_lonlat': None,
-                                'dc_title': m.group(1),
-                                'dc_type': m.group(2),
-                                'dc_source': None,
+                                'dc_title': m.group(1).strip(),
+                                'dc_type': m.group(2).strip(),
+                                'dc_source': 'Vlad',
                                 'tripod_score': 0}
                         self._gazetteer[reference]['contain'].append(topo)
         for key in self._gazetteer.keys():
@@ -117,6 +123,7 @@ class VladGazetteer(Gazetteer):
                 max_value = float(max_value)
                 for feature in self._gazetteer[key]['poi']:
                     feature['tripod_score'] = feature['tripod_score'] / max_value
+            self._gazetteer[key]['contain'].reverse()
 
     def __len__(self):
         total = 0
