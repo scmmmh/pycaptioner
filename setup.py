@@ -12,7 +12,8 @@ requires = [
             'rpy2',
             'pyproj',
             'shapely',
-            'numpy'
+            'numpy',
+            'jellyfish'
 ]
 
 
