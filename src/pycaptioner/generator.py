@@ -5,6 +5,7 @@ u"""
 """
 import numpy
 
+from itertools import product
 from random import choice
 
 
@@ -41,10 +42,30 @@ def weighted_score(configuration):
 
 def best_configuration(configurations):
     max_value = 0
+    scored = []
     for configuration in configurations:
-        if weighted_score(configuration) >= max_value:
-            max_value = weighted_score(configuration)
-    return choice([configuration for configuration in configurations if weighted_score(configuration) >= max_value])
+        if isinstance(configuration, list) or isinstance(configuration, tuple):
+            score = sum([weighted_score(c) for c in configuration])
+        else:
+            score = weighted_score(configuration)
+        scored.append((score, configuration))
+        if score >= max_value:
+            max_value = score
+    return choice([configuration for (score, configuration) in scored if score >= max_value])
+
+
+def filter_duplicates(configurations):
+    filtered = []
+    for config in configurations:
+        found = False
+        for idx in range(0, len(config)):
+            for idx2 in range(idx + 1, len(config)):
+                if config[idx]['feature']['dc_title'] == config[idx2]['feature']['dc_title']:
+                    found = True
+                    break
+        if not found:
+            filtered.append(config)
+    return filtered
 
 
 def urban_caption(configurations):
@@ -61,12 +82,34 @@ def urban_caption(configurations):
     return elements
 
 
-def top_near_captions(configurations):
-    return [conf for conf in configurations if conf['type'] == 'preposition' and conf['model'] == 'near.rural' and weighted_score(conf) > 0.8]
+def filter_configurations(configurations, model, limit):
+    return [conf for conf in configurations if conf['type'] == 'preposition' and conf['model'] == model and weighted_score(conf) > limit]
 
 
 def rural_caption(configurations):
-    near_configurations = top_near_captions(configurations)
-    if near_configurations:
-        return [best_configuration(near_configurations)]
-    return [best_configuration(configurations)]
+    at_configurations = filter_configurations(configurations, 'at.rural', 0.6)
+    if at_configurations:
+        return [best_configuration(at_configurations)]
+    else:
+        at_configurations = filter_configurations(configurations, 'at.rural', 0.4)
+        if at_configurations:
+            other_configs = filter_configurations(configurations, 'near.rural', 0.8) + \
+                filter_configurations(configurations, 'north.rural', 0.8) + \
+                filter_configurations(configurations, 'east.rural', 0.8) + \
+                filter_configurations(configurations, 'south.rural', 0.8) + \
+                filter_configurations(configurations, 'west.rural', 0.8)
+            combined_configs = filter_duplicates([list(p) for p in product(at_configurations, other_configs)])
+            if combined_configs:
+                return best_configuration(combined_configs)
+            else:
+                near_configurations = filter_configurations(configurations, 'near.rural', 0.8)
+                if near_configurations:
+                    return [best_configuration(near_configurations)]
+                else:
+                    return [best_configuration(configurations)]
+        else:
+            near_configurations = filter_configurations(configurations, 'near.rural', 0.8)
+            if near_configurations:
+                return [best_configuration(near_configurations)]
+            else:
+                return [best_configuration(configurations)]
