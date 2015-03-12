@@ -154,10 +154,13 @@ class BiReferenceKrigingModel(KrigingModel):
 
     def __call__(self, r2x, r2y, x, y):
         h = math.sqrt(math.pow(r2x, 2) + math.pow(r2y, 2))
-        angle = math.asin(r2y / h)
-        scale = (self.reference2_x - self.reference1_x) / h
-        point = numpy.array([x, y], dtype='float').dot(numpy.array([[numpy.cos(angle), -numpy.sin(angle)],
-                                                                  [numpy.sin(angle), numpy.cos(angle)]]))
-        point = point * scale - numpy.array([self.centre_x, self.centre_y])
-        value = super().__call__(point[0], point[1])
-        return value
+        if h != 0:
+            angle = math.asin(r2y / h)
+            scale = (self.reference2_x - self.reference1_x) / h
+            point = numpy.array([x, y], dtype='float').dot(numpy.array([[numpy.cos(angle), -numpy.sin(angle)],
+                                                                        [numpy.sin(angle), numpy.cos(angle)]]))
+            point = point * scale - numpy.array([self.centre_x, self.centre_y])
+            value = super().__call__(point[0], point[1])
+            return value
+        else:
+            return 0

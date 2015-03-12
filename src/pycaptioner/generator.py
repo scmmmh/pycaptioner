@@ -6,6 +6,7 @@ u"""
 import numpy
 
 from itertools import product
+from jellyfish import jaro_winkler
 from random import choice
 
 
@@ -37,7 +38,10 @@ def at_corner_addons(configurations):
 
 
 def weighted_score(configuration):
-    return 0.98 * configuration['value'] + 0.02 * configuration['feature']['tripod_score']
+    if isinstance(configuration['feature'], list):
+        return 0.98 * configuration['value'] + 0.02 * (sum([f['tripod_score'] for f in configuration['feature']]) / float(len(configuration['feature'])))
+    else:
+        return 0.98 * configuration['value'] + 0.02 * configuration['feature']['tripod_score']
 
 
 def best_configuration(configurations):
@@ -51,7 +55,10 @@ def best_configuration(configurations):
         scored.append((score, configuration))
         if score >= max_value:
             max_value = score
-    return choice([configuration for (score, configuration) in scored if score >= max_value])
+    if scored:
+        return choice([configuration for (score, configuration) in scored if score >= max_value])
+    else:
+        return None
 
 
 def filter_duplicates(configurations):
@@ -73,7 +80,19 @@ def filter_configurations(configurations, model, limit):
 
 
 def filter_feature(configurations, feature):
-    return [config for config in configurations if config['feature']['dc_title'] != feature]
+    filtered = []
+    for config in configurations:
+        if isinstance(config['feature'], list):
+            found = False
+            for sub_feature in config['feature']:
+                if jaro_winkler(sub_feature['dc_title'].lower(), feature.lower()) > 0.95:
+                    found = True
+                    break
+            if not found:
+                filtered.append(config)
+        elif jaro_winkler(config['feature']['dc_title'].lower(), feature.lower()) <= 0.95:
+            filtered.append(config)
+    return filtered
 
 
 def rural_best_relative(configurations):
@@ -81,28 +100,34 @@ def rural_best_relative(configurations):
     if at_configurations:
         return [best_configuration(at_configurations)]
     else:
-        at_configurations = filter_configurations(configurations, 'at.rural', 0.4)
-        if at_configurations:
-            other_configs = filter_configurations(configurations, 'near.rural', 0.8) + \
-                filter_configurations(configurations, 'north.rural', 0.8) + \
-                filter_configurations(configurations, 'east.rural', 0.8) + \
-                filter_configurations(configurations, 'south.rural', 0.8) + \
-                filter_configurations(configurations, 'west.rural', 0.8)
-            combined_configs = filter_duplicates([list(p) for p in product(at_configurations, other_configs)])
-            if combined_configs:
-                return best_configuration(combined_configs)
+        between_configurations = filter_configurations(configurations, 'between.rural', 0.8)
+        if between_configurations:
+            between_config = best_configuration(between_configurations)
+            near_config = best_configuration(filter_feature(filter_feature(filter_configurations(configurations,
+                                                                                                 'near.rural',
+                                                                                                 0.8),
+                                                                           between_config['feature'][0]['dc_title']),
+                                                            between_config['feature'][1]['dc_title']))
+            if near_config:
+                return [between_config, near_config]
             else:
-                near_configurations = filter_configurations(configurations, 'near.rural', 0.8)
-                if near_configurations:
-                    return [best_configuration(near_configurations)]
-                else:
-                    return [best_configuration(configurations)]
+                return [between_config]
         else:
-            near_configurations = filter_configurations(configurations, 'near.rural', 0.8)
-            if near_configurations:
-                return [best_configuration(near_configurations)]
-            else:
-                return [best_configuration(configurations)]
+            at_configurations = filter_configurations(configurations, 'at.rural', 0.4)
+            if at_configurations:
+                other_configs = filter_configurations(configurations, 'near.rural', 0.8) + \
+                    filter_configurations(configurations, 'north.rural', 0.8) + \
+                    filter_configurations(configurations, 'east.rural', 0.8) + \
+                    filter_configurations(configurations, 'south.rural', 0.8) + \
+                    filter_configurations(configurations, 'west.rural', 0.8)
+                combined_configs = filter_duplicates([list(p) for p in product(at_configurations, other_configs)])
+                if combined_configs:
+                    return best_configuration(combined_configs)
+    near_configurations = filter_configurations(configurations, 'near.rural', 0.8)
+    if near_configurations:
+        return [best_configuration(near_configurations)]
+    else:
+        return [best_configuration(configurations)]
 
 
 def rural_caption(configurations):
