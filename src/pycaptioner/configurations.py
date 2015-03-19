@@ -94,10 +94,12 @@ def generate_road_configurations(reference, gaz, context, projector):
         roads = projector(gaz(reference, category='way', filter_urban_score='LOW'))
 
     proj_reference = projector(reference)
+    configurations = []
     for road in roads:
         d = road['geo_lonlat'].distance(proj_reference)
         if d <= 10:
-            print(road)
+            configurations.append({'type': 'preposition', 'model': 'on', 'value': 1, 'feature': road})
+    return configurations
 
 
 def generate_configurations(reference, gaz, context):
@@ -111,5 +113,5 @@ def generate_configurations(reference, gaz, context):
         configurations['relative'] = rel_configs
     road_config = generate_road_configurations(reference, gaz, context, projector)
     if road_config:
-        configurations['on'] = road_config
+        configurations['support'] = road_config
     return configurations
