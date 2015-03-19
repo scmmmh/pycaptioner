@@ -150,16 +150,20 @@ def rural_caption(configurations):
 
 
 def urban_caption(configurations):
-    elements = []
-    at_corner_element = at_corner_configurations(configurations)
-    if at_corner_element:
-        elements.append(at_corner_element)
-        elements.extend(at_corner_addons(configurations))
-    else:
-        elements.append(best_configuration(configurations))
-    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'Cardiff', 'dc_type': TOWN, 'tripod_score': 1}))
-    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'Wales', 'dc_type': COUNTRY, 'tripod_score': 1}))
-    elements.append((('in', 1), {'geo_lonlat': numpy.array((0, 0)), 'dc_title': 'United Kingdom', 'dc_type': COUNTRY, 'tripod_score': 1}))
-    return elements
-
-
+    caption = []
+    if 'subject' in configurations:
+        filter_feature(configurations['relative'], configurations['subject']['dc_title'])
+        caption.append({'type': 'string', 'value': configurations['subject']['dc_title']})
+    if 'contain' in configurations and configurations['contain']:
+        area_added = False
+        for config in configurations['contain']:
+            if config['geo_type']:
+                if config['geo_type'].main_type == 'DISTRICT':
+                    pass
+                elif config['geo_type'].main_type in ['ADMIN_1', 'ADMIN_2', 'ADMIN_3', 'POPULATED_PLACE']:
+                    if not area_added:
+                        caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
+                        area_added = True
+                else:
+                    caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
+    return caption

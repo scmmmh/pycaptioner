@@ -281,3 +281,6 @@
 "Vlad","second-order administrative division","ADMIN_2","MEDIUM","MEDIUM"
 "Vlad","third-order administrative division","ADMIN_3","LOW","MEDIUM"
 "Vlad","populated place","POPULATED_PLACE","LOW","HIGH"
+"Vlad","seat of a third-order administrative division","POPULATED_PLACE","LOW","HIGH"
+"Vlad","section of populated place","DISTRICT","LOW","MEDIUM"
+
