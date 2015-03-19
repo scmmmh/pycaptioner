@@ -6,7 +6,7 @@ u"""
 
 def add_determiner(toponym):
     from pycaptioner import POI, JUNCTION, POPULATED_PLACE, NATURAL_FEATURE
-    
+
     if toponym['dc_type'] == POI:
         return 'the %s' % (toponym['dc_title'])
     elif toponym['dc_type'] == JUNCTION:
@@ -49,6 +49,8 @@ def generate_phrase(element, last_preposition):
                 return 'in', ', %s' % (add_determiner(element['feature']))
             else:
                 return 'in', ' in %s' % (add_determiner(element['feature']))
+        elif element['model'] == 'on':
+            return 'on', ' on %s' % (add_determiner(element['feature']))
     elif element['type'] == 'string':
         return '', ' %s' % (element['value'])
     return '', ''
