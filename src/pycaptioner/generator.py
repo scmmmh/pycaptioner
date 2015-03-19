@@ -133,9 +133,11 @@ def rural_best_relative(configurations):
 def rural_caption(configurations):
     caption = []
     if 'subject' in configurations:
-        filter_feature(configurations['relative'], configurations['subject']['dc_title'])
+        if 'relative' in configurations:
+            filter_feature(configurations['relative'], configurations['subject']['dc_title'])
         caption.append({'type': 'string', 'value': configurations['subject']['dc_title']})
-    caption.extend(rural_best_relative(configurations['relative']))
+    if 'relative' in configurations:
+        caption.extend(rural_best_relative(configurations['relative']))
     if 'contain' in configurations and configurations['contain']:
         admin_area = False
         for config in configurations['contain']:
@@ -152,7 +154,8 @@ def rural_caption(configurations):
 def urban_caption(configurations):
     caption = []
     if 'subject' in configurations:
-        filter_feature(configurations['relative'], configurations['subject']['dc_title'])
+        if 'relative' in configurations:
+            filter_feature(configurations['relative'], configurations['subject']['dc_title'])
         caption.append({'type': 'string', 'value': configurations['subject']['dc_title']})
     if 'contain' in configurations and configurations['contain']:
         area_added = False

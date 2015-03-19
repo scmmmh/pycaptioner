@@ -16,7 +16,7 @@ from pycaptioner.generator import rural_caption, urban_caption
 from pycaptioner.language import generate_caption
 
 
-def rural_configurations():
+def rural_configurations_test():
     """Test generating a rural context captions"""
     gaz = VladGazetteer(TextIOWrapper(resource_stream('pycaptioner', 'test/data/gazetteer_rural.txt')))
     reader = DictReader(TextIOWrapper(resource_stream('pycaptioner', 'test/data/points.csv')))
