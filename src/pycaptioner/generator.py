@@ -154,9 +154,6 @@ def rural_caption(configurations):
 
 
 def urban_best_relative(configurations):
-    corner_configurations = filter_configurations(configurations, 'at_corner.urban', 0.6)
-    if corner_configurations:
-        return [best_configuration(corner_configurations)]
     at_configurations = filter_configurations(configurations, 'at.urban', 0.6)
     if at_configurations:
         return [best_configuration(at_configurations)]
@@ -169,6 +166,14 @@ def urban_best_relative(configurations):
     return []
 
 
+def urban_best_support(configurations):
+    corner_configurations = filter_configurations(configurations, 'at_corner.urban', 0.6)
+    if corner_configurations:
+        return best_configuration(corner_configurations)
+    else:
+        return best_configuration(configurations)
+
+
 def urban_caption(configurations):
     caption = []
     if 'subject' in configurations:
@@ -178,9 +183,18 @@ def urban_caption(configurations):
             configurations['support'] = filter_feature(configurations['support'], configurations['subject']['dc_title'])
         caption.append({'type': 'string', 'value': configurations['subject']['dc_title']})
     if 'support' in configurations and configurations['support']:
-        caption.append(best_configuration(configurations['support']))
-    if 'relative' in configurations and configurations['relative']:
-        caption.extend(urban_best_relative(configurations['relative']))
+        support_configuration = urban_best_support(configurations['support'])
+        if support_configuration:
+            caption.append(support_configuration)
+            if support_configuration['model'] != 'at_corner.urban':
+                if 'relative' in configurations and configurations['relative']:
+                    caption.extend(urban_best_relative(configurations['relative']))
+        else:
+            if 'relative' in configurations and configurations['relative']:
+                caption.extend(urban_best_relative(configurations['relative']))
+    else:
+        if 'relative' in configurations and configurations['relative']:
+            caption.extend(urban_best_relative(configurations['relative']))
     if 'contain' in configurations and configurations['contain']:
         area_added = False
         for config in configurations['contain']:
