@@ -1,0 +1,30 @@
+[Meta]
+name = between.urban
+
+[Model]
+type = spline.bireference
+method = natural
+
+[Extent]
+extent_x = 764
+extent_y = 344
+centre_x = 38187.039
+centre_y = 0
+cell_size = 100
+reference1_x = 0.0
+reference2_x = 76374.0784104502
+
+[Pre-process]
+mirror = y
+
+[Data]
+0.98101266 = 5
+0.62658228 = 9
+0.46202532 = 9
+0.14556962 = 7
+-0.10759494 = 1
+0.01898734 = 5
+0.37341772 = 9
+0.53797468 = 9
+0.85443038 = 7
+1.10759494 = 1
