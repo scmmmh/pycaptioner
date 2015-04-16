@@ -32,6 +32,7 @@ def rural_configurations_test():
             print(caption)
     tools.assert_is_not_none(None)
 
+
 def urban_configurations_test():
     """Test generating urban context captions"""
     gaz = VladGazetteer(TextIOWrapper(resource_stream('pycaptioner', 'test/data/gazetteer_urban.txt')))
