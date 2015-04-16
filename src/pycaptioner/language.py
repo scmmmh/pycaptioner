@@ -27,7 +27,7 @@ def add_determiner(toponym):
 def generate_phrase(element, last_preposition):
     if element['type'] == 'preposition':
         if element['model'].startswith('at_corner.'):
-            return 'at', ' at the corner of %s' % (element['feature']['dc_title'])
+            return 'at', ' at the corner of %s and %s' % (element['feature'][0]['dc_title'], element['feature'][1]['dc_title'])
         elif element['model'].startswith('at.'):
             return 'at', ' at %s' % (add_determiner(element['feature']))
         elif element['model'].startswith('near.'):

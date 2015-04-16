@@ -4,10 +4,10 @@ u"""
 .. moduleauthor:: Mark Hall <mark.hall@mail.room3b.eu>
 """
 import logging
-import math
 import numpy
 
 from copy import deepcopy
+from itertools import permutations
 from pyproj import Proj
 from shapely import geometry
 
@@ -15,8 +15,8 @@ from pycaptioner import models
 
 MODELS = {'rural': {'one_poi': ['at.rural', 'near.rural', 'east.rural', 'north.rural', 'west.rural', 'south.rural'],
                     'two_poi': ['between.rural']},
-          'urban': {'one_poi': ['at_corner.urban', 'at.urban', 'next_to.urban', 'near.urban'],
-                    'two_poi': []}}
+          'urban': {'one_poi': ['at.urban', 'next_to.urban', 'near.urban'],
+                    'two_poi': ['between.urban']}}
 
 
 class Projector(object):
@@ -61,6 +61,7 @@ def generate_relative_configurations(reference, gaz, context, projector):
         pois = projector(gaz(reference, category='poi', filter_rural_score='MEDIUM'))
     elif context == 'urban':
         pois = projector(gaz(reference, category='poi', filter_urban_score='MEDIUM'))
+        roads = projector(gaz(reference, category='way', filter_urban_score='LOW'))
 
     proj_reference = projector(reference)
     configurations = []
@@ -70,13 +71,13 @@ def generate_relative_configurations(reference, gaz, context, projector):
             value = model(*(numpy.array(proj_reference) - numpy.array(feature['geo_lonlat'])))
             if value >= 0.4:
                 configurations.append({'type': 'preposition', 'model': model_name, 'value': value, 'feature': feature})
-    for model_name in MODELS[context]['two_poi']:
-        model = models.load(model_name)
-        for idx in range(1, len(pois)):
-            start = pois[idx]
-            for idx2 in range(0, idx):
-                end = pois[idx2]
-                if context == 'rural':
+    if context == 'rural':
+        for model_name in MODELS[context]['two_poi']:
+            model = models.load(model_name)
+            for idx in range(1, len(pois)):
+                start = pois[idx]
+                for idx2 in range(0, idx):
+                    end = pois[idx2]
                     if start['dc_title'] != end['dc_title'] and start['geo_type'].main_type == end['geo_type'].main_type and start['geo_type'].main_type != 'POI':
                         d = start['geo_lonlat'].distance(end['geo_lonlat'])
                         if 5000 > d > 0:
@@ -84,6 +85,32 @@ def generate_relative_configurations(reference, gaz, context, projector):
                             value = model(*(params))
                             if value >= 0.6:
                                 configurations.append({'type': 'preposition', 'model': model_name, 'value': value, 'feature': [start, end]})
+    elif context == 'urban':
+        for model_name in MODELS[context]['two_poi']:
+            model = models.load(model_name)
+            for road in roads:
+                if road['geo_lonlat'].distance(proj_reference) <= 10:
+                    if model_name == 'between.urban':
+                        intersections = []
+                        for poi in pois:
+                            d = road['geo_lonlat'].distance(poi['geo_lonlat'])
+                            if d <= 10:
+                                intersections.append(poi)
+                        for road2 in roads:
+                            if road['dc_title'] != road2['dc_title'] and road['geo_lonlat'].intersects(road2['geo_lonlat']):
+                                intersection = road['geo_lonlat'].intersection(road2['geo_lonlat'])
+                                if isinstance(intersection, geometry.Point):
+                                    poi = deepcopy(road2)
+                                    poi['geo_lonlat'] = intersection
+                                    intersections.append(poi)
+                        for pairs in permutations(intersections, 2):
+                            dist_1 = road['geo_lonlat'].project(pairs[0]['geo_lonlat'])
+                            dist_2 = road['geo_lonlat'].project(proj_reference)
+                            dist_3 = road['geo_lonlat'].project(pairs[1]['geo_lonlat'])
+                            if dist_1 < dist_2 < dist_3:
+                                value = model(dist_2 - dist_1) / (dist_3 - dist_1)
+                                if value >= 0.6:
+                                    configurations.append({'type': 'preposition', 'model': model_name, 'value': value, 'feature': [pairs[0], pairs[1]]})
     return configurations
 
 
@@ -99,6 +126,16 @@ def generate_road_configurations(reference, gaz, context, projector):
         d = road['geo_lonlat'].distance(proj_reference)
         if d <= 10:
             configurations.append({'type': 'preposition', 'model': 'on', 'value': 1, 'feature': road})
+        if context == 'urban':
+            model = models.load('at_corner.urban')
+            for road2 in roads:
+                if road['dc_title'] != road2['dc_title'] and road['geo_lonlat'].intersects(road2['geo_lonlat']):
+                    intersection = road['geo_lonlat'].intersection(road2['geo_lonlat'])
+                    if isinstance(intersection, geometry.Point):
+                        params = list(numpy.array(proj_reference) - numpy.array(intersection))
+                        value = model(*params)
+                        if value >= 0.6:
+                            configurations.append({'type': 'preposition', 'model': 'at_corner.urban', 'value': value, 'feature': [road, road2]})
     return configurations
 
 
