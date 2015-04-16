@@ -74,3 +74,13 @@ def rural_between_test():
     tools.assert_greater_equal(0.01, mdl(100, 100, 100, 100))
     tools.assert_greater_equal(mdl(100, 0, 53, 0), 0.8)
     tools.assert_greater_equal(mdl(100, 0, 75, 0), 0.8)
+
+
+def urban_between_test():
+    mdl = load('between.urban')
+    tools.assert_is_not_none(mdl)
+    tools.eq_(0, mdl(-1))
+    tools.eq_(0, mdl(1.1))
+    tools.assert_greater_equal(mdl(0.4), 0.98)
+    tools.assert_greater_equal(mdl(0.5), 0.98)
+    tools.assert_greater_equal(mdl(0.6), 0.98)

@@ -22,6 +22,8 @@ def load(field_name):
         return KrigingModel(config)
     elif field_type == 'kriging.bireference':
         return BiReferenceKrigingModel(config)
+    elif field_type == 'spline.bireference':
+        return BiReferenceSplineModel(config)
     else:
         return None
 
@@ -48,6 +50,24 @@ class SplineModel(object):
             return 0
         else:
             return max(0, min(1, self.spline(dist(x, y))[0]))
+
+
+class BiReferenceSplineModel(object):
+    
+    def __init__(self, config):
+        logging.debug('Instantiating BiReferenceSplineModel %s' % (config.get('Meta', 'name')))
+        r = robjects.r
+        points = [(float(p[0]), max(0, min(1, (float(p[1]) - 1) / 8))) for p in config.items('Data')]
+        points.sort(key=lambda p: p[0])
+        self.spline = r['splinefun'](robjects.FloatVector([p[0] for p in points]),
+                                     robjects.FloatVector([p[1] for p in points]),
+                                     method=config.get('Model', 'method'))
+    
+    def __call__(self, d):
+        if d < 0 or d > 1:
+            return 0
+        else:
+            return  max(0, min(1, self.spline(d)[0]))
 
 
 def point_in_lists(x, y, x_list, y_list):
