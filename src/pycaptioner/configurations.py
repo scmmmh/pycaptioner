@@ -24,13 +24,13 @@ class Projector(object):
     def __init__(self, init):
         self.proj = Proj(init=init)
 
-    def __call__(self, geom):
+    def __call__(self, geom, inverse=False):
         if isinstance(geom, geometry.Point):
-            return geometry.Point(*self.proj(geom.x, geom.y))
+            return geometry.Point(*self.proj(geom.x, geom.y, inverse=inverse))
         elif isinstance(geom, geometry.LineString):
             coords = []
             for coord in geom.coords:
-                coords.append(self.proj(coord[0], coord[1]))
+                coords.append(self.proj(coord[0], coord[1], inverse=inverse))
             return geometry.LineString(coords)
         elif isinstance(geom, list):
             return [self(item) for item in geom]
