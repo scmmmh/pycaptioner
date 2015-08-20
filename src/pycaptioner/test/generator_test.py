@@ -24,5 +24,5 @@ def rural_generator_test():
     caption = rural_caption(configurations)
     print(caption)
     tools.assert_is_not_none(caption)
-    tools.eq_(len(caption), 1)
+    tools.eq_(len(caption), 3)
 

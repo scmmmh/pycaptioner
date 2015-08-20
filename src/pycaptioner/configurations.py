@@ -14,7 +14,7 @@ from shapely import geometry
 from pycaptioner import models
 
 MODELS = {'rural': {'one_poi': ['at.rural', 'near.rural', 'east.rural', 'north.rural', 'west.rural', 'south.rural'],
-                    'two_poi': ['between.rural']},
+                    'two_poi': []},
           'urban': {'one_poi': ['at.urban', 'next_to.urban', 'near.urban'],
                     'two_poi': ['between.urban']}}
 
