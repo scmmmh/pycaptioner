@@ -139,17 +139,22 @@ def rural_caption(configurations):
     if 'support' in configurations and configurations['support']:
         caption.append(best_configuration(configurations['support']))
     if 'relative' in configurations and configurations['relative']:
+        if 'subject' in configurations:
+            caption.append({'type': 'string', 'value': 'photographed'})
         caption.extend(rural_best_relative(configurations['relative']))
     if 'contain' in configurations and configurations['contain']:
         admin_area = False
+        used = []
         for config in configurations['contain']:
             if config['geo_type']:
                 if config['geo_type'].main_type == 'ADMIN_1' or config['geo_type'].main_type == 'ADMIN_2' or config['geo_type'].main_type == 'ADMIN_3':
-                    if not admin_area:
+                    if not admin_area and config['dc_title'] not in used:
                         caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
                         admin_area = True
+                        used.append(config['dc_title'])
                 else:
                     caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
+                    used.append(config['dc_title'])
     return caption
 
 
@@ -183,6 +188,8 @@ def urban_caption(configurations):
             configurations['support'] = filter_feature(configurations['support'], configurations['subject']['dc_title'])
         caption.append({'type': 'string', 'value': configurations['subject']['dc_title']})
     if 'support' in configurations and configurations['support']:
+        if 'subject' in configurations:
+            caption.append({'type': 'string', 'value': 'photographed'})
         support_configuration = urban_best_support(configurations['support'])
         if support_configuration:
             caption.append(support_configuration)
@@ -191,20 +198,28 @@ def urban_caption(configurations):
                     caption.extend(urban_best_relative(configurations['relative']))
         else:
             if 'relative' in configurations and configurations['relative']:
+                if 'subject' in configurations:
+                    caption.append({'type': 'string', 'value': 'photographed'})
                 caption.extend(urban_best_relative(configurations['relative']))
     else:
         if 'relative' in configurations and configurations['relative']:
+            if 'subject' in configurations:
+                caption.append({'type': 'string', 'value': 'photographed'})
             caption.extend(urban_best_relative(configurations['relative']))
     if 'contain' in configurations and configurations['contain']:
         area_added = False
+        used = []
         for config in configurations['contain']:
             if config['geo_type']:
-                if config['geo_type'].main_type == 'POPULATED_PLACE':
+                if config['geo_type'].main_type == 'POPULATED_PLACE' and config['dc_title'] not in used:
                     caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
-                elif config['geo_type'].main_type in ['ADMIN_1', 'ADMIN_2']:
+                    used.append(config['dc_title'])
+                elif config['geo_type'].main_type in ['ADMIN_1', 'ADMIN_2'] and config['dc_title'] not in used:
                     if not area_added:
                         caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
                         area_added = True
-                elif config['geo_type'].main_type == 'STATE':
+                        used.append(config['dc_title'])
+                elif config['geo_type'].main_type == 'STATE' and config['dc_title'] not in used:
                     caption.append({'type': 'preposition', 'model': 'in', 'feature': config})
+                    used.append(config['dc_title'])
     return caption
