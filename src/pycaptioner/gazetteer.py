@@ -95,8 +95,6 @@ class VladGazetteer(Gazetteer):
             if reference not in self._gazetteer:
                 self._gazetteer[reference] = {'poi': [], 'way': [], 'contain': []}
             if line[2] == 'Toponym':
-                if 'OSM' not in line[5]:
-                    continue
                 line[8] = line[8].strip()[15:-1]
                 topo = {'geo_lonlat': geometry.Point(float(line[8].split(',')[0]), float(line[8].split(',')[1])),
                         'dc_title': line[3],
