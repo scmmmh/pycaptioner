@@ -56,6 +56,8 @@ class LocationType(object):
                 self.urban_score = TYPE_MAPPINGS[source][source_type]['urban_score']
             else:
                 logging.warning('Missing type %s:%s' % (source, source_type))
+                self.rural_score = 0
+                self.urban_score = 0
 
     def __repr__(self):
         return 'LocationType(main_type=%s, sub_type=%s, urban_score=%s, rural_score=%s)' % (self.main_type,
@@ -87,10 +89,14 @@ class VladGazetteer(Gazetteer):
         self._gazetteer = {}
         for line in source:
             line = line.split('||')
+            if line[3] == 'Unnamed':
+                continue
             reference = '%f::%f' % (float(line[1]), float(line[0]))
             if reference not in self._gazetteer:
                 self._gazetteer[reference] = {'poi': [], 'way': [], 'contain': []}
             if line[2] == 'Toponym':
+                if 'OSM' not in line[5]:
+                    continue
                 line[8] = line[8].strip()[15:-1]
                 topo = {'geo_lonlat': geometry.Point(float(line[8].split(',')[0]), float(line[8].split(',')[1])),
                         'dc_title': line[3],
