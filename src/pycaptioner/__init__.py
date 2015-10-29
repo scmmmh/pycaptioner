@@ -1,6 +1,7 @@
 import logging
 import numpy
 
+from osmgaz import OSMGaz
 from pyproj import Proj
 
 from pycaptioner import models, language, generator
@@ -15,6 +16,24 @@ URBAN_TWO_POINT_MODELS = ['between.urban']
 
 
 def main():
+    points = [
+              (-2.63629, 53.39797), # Dakota Park
+              (-1.88313, 53.38129), # Peak District
+              (-3.43924, 51.88286), # Brecon Beacons
+              (-3.17516, 51.50650), # Roath Park
+              (-2.99141, 53.40111), # Liverpool
+              (-2.04045, 53.34058), # Lyme Park
+              (-2.47429, 53.3827),  # Lymm
+              ]
+    gaz = OSMGaz('postgresql+psycopg2://osm:osmPWD@localhost:4321/osm')
+    for point in points:
+        print(point)
+        geo_data = gaz(point)
+        print(language.generate_caption([{'dc_type': 'preposition',
+                                          'preposition': 'in',
+                                          'toponym': {'dc_title': toponym['dc_title'],
+                                                      'dc_type': toponym['dc_type']}} for toponym in geo_data['osm_containment'][:-1]]))
+    '''
     proj = Proj(init='epsg:32630')
     for feature in GAZETTEER:
         feature['geo_lonlat'] = numpy.array(proj(*feature['geo_lonlat']))
@@ -47,4 +66,4 @@ def main():
                     print(baseline, pos)
                     configurations.append((('between.rural', 1), feature1, feature2))
     print(language.generate_caption(generator.urban_caption(configurations)))
-
+    '''
