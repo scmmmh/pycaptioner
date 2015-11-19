@@ -24,12 +24,26 @@ def load(field_name):
         return BiReferenceKrigingModel(config)
     elif field_type == 'spline.bireference':
         return BiReferenceSplineModel(config)
+    elif field_type == 'fixed.distance':
+        return FixedDistanceModel(config)
     else:
         return None
 
 
 def dist(x, y):
     return math.sqrt(math.pow(x, 2) + math.pow(y, 2))
+
+
+class FixedDistanceModel(object):
+    
+    def __init__(self, config):
+        pass
+    
+    def __call__(self, x, y):
+        if dist(x, y) <= 20:
+            return 1
+        else:
+            return 0
 
 
 class SplineModel(object):
