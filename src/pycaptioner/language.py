@@ -5,23 +5,21 @@ u"""
 """
 
 def add_determiner(toponym):
-    from pycaptioner import POI, JUNCTION, POPULATED_PLACE, NATURAL_FEATURE
-
-    if toponym['dc_type'] == POI:
-        return 'the %s' % (toponym['dc_title'])
-    elif toponym['dc_type'] == JUNCTION:
-        return 'the %s' % (toponym['dc_title'])
-    elif toponym['dc_type'] == POPULATED_PLACE:
-        return toponym['dc_title']
-    elif toponym['dc_type'] == NATURAL_FEATURE:
-        return 'the %s' % (toponym['dc_title'])
+    #if toponym['dc_type'] == POI:
+    #    return 'the %s' % (toponym['dc_title'])
+    #elif toponym['dc_type'] == JUNCTION:
+    #    return 'the %s' % (toponym['dc_title'])
+    #elif toponym['dc_type'] == POPULATED_PLACE:
+    #    return toponym['dc_title']
+    #elif toponym['dc_type'] == NATURAL_FEATURE:
+    #    return 'the %s' % (toponym['dc_title'])
     #elif toponym['dc_type'] == COUNTRY:
     #    if toponym['dc_title'] in ['United Kingdom', 'United States of America', 'United States', 'Netherlands']:
     #        return 'the %s' % (toponym['dc_title'])
     #    else:
     #        return toponym['dc_title']
-    else:
-        return toponym['dc_title']
+    #else:
+    return toponym['dc_title']
 
 
 def generate_phrase(element, last_preposition):
