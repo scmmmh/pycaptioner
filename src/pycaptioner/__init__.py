@@ -6,13 +6,12 @@ from pyproj import Proj
 from shapely.geometry import Point, LineString, Polygon
 from shapely import wkt
 
-from pycaptioner import models, language, generator
-from pycaptioner.gazetteer import *
+from pycaptioner import models, language
 
 logging.root.setLevel(logging.DEBUG)
 
-RURAL_ONE_POINT_MODELS = ['on.universal', 'next_to.urban', 'near.rural', 'east.rural', 'north.rural', 'west.rural', 'south.rural']
-URBAN_ONE_POINT_MODELS = ['on.universal', 'at_corner.urban', 'at.urban', 'next_to.urban', 'near.urban']
+RURAL_ONE_POINT_MODELS = ['on.universal', 'next_to.universal', 'near.rural', 'east.rural', 'north.rural', 'west.rural', 'south.rural']
+URBAN_ONE_POINT_MODELS = ['on.universal', 'at_corner.urban', 'at.urban', 'next_to.universal', 'near.urban']
 RURAL_TWO_POINT_MODELS = ['between.rural']
 URBAN_TWO_POINT_MODELS = ['between.urban']
 
@@ -155,41 +154,7 @@ def main():
         elements.extend([{'dc_type': 'preposition','preposition': 'in',
                           'toponym': {'dc_title': toponym['dc_title'],
                                       'dc_type': toponym['dc_type']}} for toponym in geo_data['osm_containment'][:-1]])
-        print(language.generate_caption(elements))
         captions.append(language.generate_caption(elements))
     for c in captions:
         print(c)
-    '''
-    proj = Proj(init='epsg:32630')
-    for feature in GAZETTEER:
-        feature['geo_lonlat'] = numpy.array(proj(*feature['geo_lonlat']))
-    #point = numpy.array(proj(*(-2.5901763343811035, 53.38953524087438)))
-    #point = numpy.array(proj(*(-2.6008307933807373, 53.388645857875055, )))
-    #point = numpy.array(proj(*(-2.5901763343811035, 53.38953524087438)))
-    point = numpy.array(proj(*(-2.6004, 53.3887))) # Between point
-    configurations = []
-    """
-    for model_name in RURAL_ONE_POINT_MODELS:
-        model = models.load(model_name)
-        for feature in GAZETTEER:
-            if model_name in ['at.urban', 'near.urban', 'next_to.urban', 'east.rural', 'north.rural', 'west.rural', 'south.rural', 'near.rural'] and feature['dc_type'] == POI:
-                value = model(*(point - feature['geo_lonlat']))
-            elif model_name == 'at_corner.urban' and feature['dc_type'] == JUNCTION:
-                value = model(*(point - feature['geo_lonlat']))
-            else:
-                value = None
-            if value and value >= 0.6:
-                print model_name, value
-                configurations.append(((model_name, value), feature))
-    """
-    for model_name in RURAL_TWO_POINT_MODELS:
-        model = models.load(model_name)
-        for feature1 in GAZETTEER:
-            for feature2 in GAZETTEER:
-                if feature1['dc_type'] != JUNCTION and feature2['dc_type'] != JUNCTION and feature1['dc_title'] != feature2['dc_title']:
-                    baseline = feature2['geo_lonlat'] - feature1['geo_lonlat']
-                    pos = point - feature1['geo_lonlat']
-                    print(baseline, pos)
-                    configurations.append((('between.rural', 1), feature1, feature2))
-    print(language.generate_caption(generator.urban_caption(configurations)))
-    '''
+
