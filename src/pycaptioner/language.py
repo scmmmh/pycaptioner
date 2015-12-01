@@ -70,7 +70,7 @@ def generate_phrase(element, last_preposition):
                 return 'in', ' in %s' % (add_determiner(element['toponym']))
         elif element['preposition'].startswith('on.'):
             return 'on', ' on %s' % (add_determiner(element['toponym']))
-    elif element['type'] == 'string':
+    elif element['dc_type'] == 'string':
         return '', ' %s' % (element['value'])
     return '', ''
 
