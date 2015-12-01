@@ -3,23 +3,44 @@ u"""
 
 .. moduleauthor:: Mark Hall <mark.hall@mail.room3b.eu>
 """
+from osmgaz import filters
+
+
+def needs_determiner(toponym):
+    if toponym['dc_title'].lower().startswith('the'):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['PLACE']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['AREA', 'ADMINISTRATIVE']):
+        if 'kingdom' in toponym['dc_title'].lower():
+            return True
+        elif 'states' in toponym['dc_title'].lower():
+            return True
+        elif 'republic' in toponym['dc_title'].lower():
+            return True
+        elif toponym['dc_title'].lower().endswith('s'):
+            return True
+        return False
+    elif filters.type_match(toponym['dc_type'], ['AREA', 'CEREMONIAL']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['NATURAL FEATURE']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'COMMERCIAL']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'EDUCATION']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'PARK']):
+        return False
+    return True
+
 
 def add_determiner(toponym):
-    #if toponym['dc_type'] == POI:
-    #    return 'the %s' % (toponym['dc_title'])
-    #elif toponym['dc_type'] == JUNCTION:
-    #    return 'the %s' % (toponym['dc_title'])
-    #elif toponym['dc_type'] == POPULATED_PLACE:
-    #    return toponym['dc_title']
-    #elif toponym['dc_type'] == NATURAL_FEATURE:
-    #    return 'the %s' % (toponym['dc_title'])
-    #elif toponym['dc_type'] == COUNTRY:
-    #    if toponym['dc_title'] in ['United Kingdom', 'United States of America', 'United States', 'Netherlands']:
-    #        return 'the %s' % (toponym['dc_title'])
-    #    else:
-    #        return toponym['dc_title']
-    #else:
-    return toponym['dc_title']
+    if needs_determiner(toponym):
+        return 'the %s' % toponym['dc_title']
+    else:
+        return toponym['dc_title']
 
 
 def generate_phrase(element, last_preposition):
