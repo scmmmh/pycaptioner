@@ -44,4 +44,4 @@ def eval_test():
 
 
 def main():
-    local_test()
+    eval_test()
