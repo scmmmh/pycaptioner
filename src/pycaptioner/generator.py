@@ -5,7 +5,7 @@ u"""
 """
 from osmgaz import OSMGaz, filters
 from pyproj import Proj
-from shapely.geometry import Point, LineString, Polygon
+from shapely.geometry import Point, MultiLineString, LineString, Polygon
 from shapely import wkt
 
 from pycaptioner import models
@@ -13,8 +13,8 @@ from pycaptioner import models
 RURAL_TWO_POINT_MODELS = ['between.rural'] # Todo: Do something with these
 URBAN_TWO_POINT_MODELS = ['between.urban']
 
-MODELS = {'urban': [(model_name, models.load(model_name)) for model_name in ['on.universal',
-                                                                             'at_corner.urban',
+MODELS = {'urban': [(model_name, models.load(model_name)) for model_name in ['at_corner.urban',
+                                                                             'on.universal',
                                                                              'at.urban',
                                                                              'next_to.universal',
                                                                              'near.urban']],
@@ -37,6 +37,8 @@ def max_distance(point, other):
         return max([point.distance(Point(c)) for c in other.exterior.coords])
     elif isinstance(other, LineString):
         return max([point.distance(Point(c)) for c in other.coords])
+    elif isinstance(other, MultiLineString):
+        return max([max_distance(point, part) for part in other])
     else:
         return point.distance(other)
 
@@ -67,11 +69,11 @@ def toponym_score(point, toponym, weights, dist=None, error_dist=None, toponyms=
         error_score = (1 - (max_distance(point, toponym['osm_geometry']) - error_dist[0]) / error_dist[1]) * weights['error']
     if 'osm_salience' in toponym:
         if 'name' in toponym['osm_salience']:
-            name_score = toponym['osm_salience']['name'] * weights['name']
+            name_score = float(toponym['osm_salience']['name']) * weights['name']
         else:
             name_score = 0
         if 'type' in toponym['osm_salience']:
-            type_score = toponym['osm_salience']['type'] * weights['type']
+            type_score = float(toponym['osm_salience']['type']) * weights['type']
         else:
             type_score = 0
         score = dist_score + error_score + name_score + type_score
@@ -121,7 +123,7 @@ def load_geodata(point):
 
 def urban_rural(geo_data, point):
     """Determine whether the point is a rural or urban location."""
-    for toponym in geo_data['osm_containment']:
+    for toponym in geo_data['osm_proximal']:
         if filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING']) and toponym['osm_geometry'].distance(point) < 400:
             return 'urban'
     return 'rural'
@@ -129,7 +131,7 @@ def urban_rural(geo_data, point):
 
 def closest_point(point, geom):
     """Return the closest point in geom with respect to point."""
-    if isinstance(geom, LineString):
+    if isinstance(geom, LineString) or isinstance(geom, MultiLineString):
         geom = geom.interpolate(geom.project(point))
     elif isinstance(geom, Polygon):
         geom = LineString(geom.exterior)
@@ -140,15 +142,21 @@ def closest_point(point, geom):
 def add_road_element(point, toponyms, models):
     """Determine whether there is a road toponym to be added to the caption and return that."""
     for toponym in toponyms:
-        geom = closest_point(point, toponym['osm_geometry'])
-        for model_name, model in models:
-            if model_name.startswith('at_corner.') and filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD', 'JUNCTION']):
-                pass
-            elif model_name.startswith('on.') and filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
-                if model(point.x - geom.x, point.y - geom.y) == 1:
-                    return {'dc_type': 'preposition',
-                            'preposition': 'on.universal',
-                            'toponym': toponym}
+        if filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
+            geom = closest_point(point, toponym['osm_geometry'])
+            for model_name, model in models:
+                if filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD', 'JUNCTION']):
+                    if model_name.startswith('at_corner.'):
+                        if model(point.x - geom.x, point.y - geom.y) > 0.6:
+                            return {'dc_type': 'preposition',
+                                    'preposition': model_name,
+                                    'toponym': toponym}
+                else:
+                    if model_name.startswith('on.'):
+                        if model(point.x - geom.x, point.y - geom.y) == 1:
+                            return {'dc_type': 'preposition',
+                                    'preposition': 'on.universal',
+                                    'toponym': toponym}
     return None
 
 
