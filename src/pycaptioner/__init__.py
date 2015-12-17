@@ -34,7 +34,7 @@ def eval_test():
         for line in reader:
             point = (float(line['lon']), float(line['lat']))
             print(point)
-            caption = generator.generate_caption(point)
+            caption = generator.generate_caption(point, filter_names=[line['subject']])
             caption.insert(0, {'dc_type': 'string', 'value': line['subject']})
             caption = language.generate_caption(caption)
             print(caption)

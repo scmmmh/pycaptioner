@@ -102,6 +102,11 @@ def filter_by_score(point, toponyms, limit, weights):
             if toponym_score(point, toponym, weights, dist=dist, error_dist=error_dist) > limit]
 
 
+def filter_by_names(toponyms, names):
+    """Filter all toponyms that share an already-used name."""
+    return [toponym for toponym in toponyms if toponym['dc_title'] not in names]
+
+
 def sort(point, toponyms, weights):
     """Sort the given toponyms based on the sort_key."""
     if len(toponyms) > 1:
@@ -188,26 +193,32 @@ def add_toponym_element(point, toponyms, models):
                         'preposition': model_name,
                         'toponym': toponym}
 
-def generate_caption(point):
+def generate_caption(point, filter_names=None):
     """Generate a caption for the given point."""
     geo_data = load_geodata(point)
     point = Point(*PROJ(*point))
     caption = []
     spatial_error = max_distance(point, geo_data['osm_containment'][0]['osm_geometry'])
     models = MODELS[urban_rural(geo_data, point)]
+    names = [t['dc_title'] for t in geo_data['osm_containment']]
+    if filter_names is not None:
+        names.extend(filter_names)
     toponyms = sort(point,
                     filter_by_max_distance(point,
-                                           geo_data['osm_proximal'],
+                                           filter_by_names(geo_data['osm_proximal'], names),
                                            spatial_error),
                     DISTANCE_WEIGHTS)
+    for t in geo_data['osm_containment']:
+        print(t['dc_title'], t['dc_type'])
     road = add_road_element(point, toponyms, models)
     if road:
+        names.append(road['toponym']['dc_title'])
         caption.append(road)
         spatial_error = max_distance(point, road['toponym']['osm_geometry'])
         models = filter_models(models, ['at_corner.', 'on.'])
         toponyms = sort(point,
                         filter_by_max_distance(point,
-                                               toponyms,
+                                               filter_by_names(toponyms, names),
                                                spatial_error),
                         DISTANCE_WEIGHTS)
     while len(toponyms) > 0 and len(models) > 0:
@@ -217,7 +228,7 @@ def generate_caption(point):
             models = filter_models(models, toponym['preposition'])
             toponyms = sort(point,
                             filter_by_score(point,
-                                            toponyms,
+                                            filter_by_names(toponyms, names),
                                             toponym_score(point,
                                                           caption[-1]['toponym'],
                                                           SALIENCE_WEIGHTS,
