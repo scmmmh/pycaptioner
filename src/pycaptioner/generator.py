@@ -199,6 +199,7 @@ def add_toponym_element(point, toponyms, models):
 
 
 def normalise_flickr(geo_data):
+    """Normalise the Flickr counts."""
     max_flickr = 0
     for toponym in geo_data['osm_proximal']:
         if 'osm_salience' in toponym and 'flickr' in toponym['osm_salience']:
