@@ -26,8 +26,8 @@ MODELS = {'urban': [(model_name, models.load(model_name)) for model_name in ['at
                                                                              'west.rural',
                                                                              'south.rural']]}
 PROJ = Proj(init='epsg:3857')
-DISTANCE_WEIGHTS = {'dist': 0.5, 'error': 0.1, 'name': 0.3, 'type': 0.1}
-SALIENCE_WEIGHTS = {'dist': 0.1, 'error': 0.4, 'name': 0.45, 'type': 0.05}
+DISTANCE_WEIGHTS = {'dist': 0.3, 'error': 0.1, 'name': 0.2, 'type': 0.1, 'flickr': 0.3}
+SALIENCE_WEIGHTS = {'dist': 0.05, 'error': 0.3, 'name': 0.3, 'type': 0.05, 'flickr': 0.3}
 
 def max_distance(point, other):
     """Calculate the maximum distance from the point to the other geometry. For
@@ -76,7 +76,11 @@ def toponym_score(point, toponym, weights, dist=None, error_dist=None, toponyms=
             type_score = float(toponym['osm_salience']['type']) * weights['type']
         else:
             type_score = 0
-        score = dist_score + error_score + name_score + type_score
+        if 'flickr' in toponym['osm_salience']:
+            flickr_score = float(toponym['osm_salience']['flickr']) * weights['type']
+        else:
+            flickr_score = 0
+        score = dist_score + error_score + name_score + type_score + flickr_score
     else:
         score = dist_score + error_score
     return score
@@ -193,9 +197,23 @@ def add_toponym_element(point, toponyms, models):
                         'preposition': model_name,
                         'toponym': toponym}
 
+
+def normalise_flickr(geo_data):
+    max_flickr = 0
+    for toponym in geo_data['osm_proximal']:
+        if 'osm_salience' in toponym and 'flickr' in toponym['osm_salience']:
+            max_flickr = max(max_flickr, toponym['osm_salience']['flickr'])
+    if max_flickr > 0:
+        for toponym in geo_data['osm_proximal']:
+            if 'osm_salience' in toponym and 'flickr' in toponym['osm_salience']:
+                toponym['osm_salience']['flickr']= toponym['osm_salience']['flickr'] / max_flickr
+    return geo_data
+
+
 def generate_caption(point, filter_names=None):
     """Generate a caption for the given point."""
     geo_data = load_geodata(point)
+    geo_data = normalise_flickr(geo_data)
     point = Point(*PROJ(*point))
     caption = []
     spatial_error = max_distance(point, geo_data['osm_containment'][0]['osm_geometry'])
@@ -208,8 +226,6 @@ def generate_caption(point, filter_names=None):
                                            filter_by_names(geo_data['osm_proximal'], names),
                                            spatial_error),
                     DISTANCE_WEIGHTS)
-    for t in geo_data['osm_containment']:
-        print(t['dc_title'], t['dc_type'])
     road = add_road_element(point, toponyms, models)
     if road:
         names.append(road['toponym']['dc_title'])
