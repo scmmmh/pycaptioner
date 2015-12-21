@@ -29,6 +29,7 @@ PROJ = Proj(init='epsg:3857')
 DISTANCE_WEIGHTS = {'dist': 0.3, 'error': 0.1, 'name': 0.2, 'type': 0.1, 'flickr': 0.3}
 SALIENCE_WEIGHTS = {'dist': 0.05, 'error': 0.3, 'name': 0.3, 'type': 0.05, 'flickr': 0.3}
 
+
 def max_distance(point, other):
     """Calculate the maximum distance from the point to the other geometry. For
     things other than Points this will return the distance to the most distant
