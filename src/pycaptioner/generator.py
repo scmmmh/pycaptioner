@@ -115,9 +115,9 @@ def sort(point, toponyms, weights):
     return toponyms
 
 
-def load_geodata(point):
+def load_geodata(sqlalchemy_url, point):
     """Load the geo-data from the gazetteer."""
-    gaz = OSMGaz('postgresql+psycopg2://osm:osmPWD@localhost:4321/osm')
+    gaz = OSMGaz(sqlalchemy_url)
     geo_data = gaz(point)
     for toponym in geo_data['osm_proximal']:
         toponym['osm_geometry'] = wkt.loads(toponym['osm_geometry'])
@@ -193,9 +193,10 @@ def add_toponym_element(point, toponyms, models):
                         'preposition': model_name,
                         'toponym': toponym}
 
-def generate_caption(point, filter_names=None):
+
+def generate_caption(sqlalchemy_url, point, filter_names=None):
     """Generate a caption for the given point."""
-    geo_data = load_geodata(point)
+    geo_data = load_geodata(sqlalchemy_url, point)
     point = Point(*PROJ(*point))
     caption = []
     spatial_error = max_distance(point, geo_data['osm_containment'][0]['osm_geometry'])
@@ -208,8 +209,6 @@ def generate_caption(point, filter_names=None):
                                            filter_by_names(geo_data['osm_proximal'], names),
                                            spatial_error),
                     DISTANCE_WEIGHTS)
-    for t in geo_data['osm_containment']:
-        print(t['dc_title'], t['dc_type'])
     road = add_road_element(point, toponyms, models)
     if road:
         names.append(road['toponym']['dc_title'])
@@ -238,6 +237,7 @@ def generate_caption(point, filter_names=None):
         else:
             toponyms = []
     caption.extend([{'dc_type': 'preposition','preposition': 'in',
-                      'toponym': {'dc_title': toponym['dc_title'],
-                                  'dc_type': toponym['dc_type']}} for toponym in geo_data['osm_containment'][:-1]])
+                     'toponym': {'dc_title': toponym['dc_title'],
+                                 'dc_type': toponym['dc_type'],
+                                 'osm_geometry': toponym['osm_geometry']}} for toponym in geo_data['osm_containment'][:-1]])
     return caption
