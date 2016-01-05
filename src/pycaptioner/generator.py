@@ -139,8 +139,8 @@ def rural_caption(configurations):
     if 'support' in configurations and configurations['support']:
         caption.append(best_configuration(configurations['support']))
     if 'relative' in configurations and configurations['relative']:
-        if 'subject' in configurations:
-            caption.append({'type': 'string', 'value': 'photographed'})
+        #if 'subject' in configurations:
+        #    caption.append({'type': 'string', 'value': 'photographed'})
         caption.extend(rural_best_relative(configurations['relative']))
     if 'contain' in configurations and configurations['contain']:
         admin_area = False
@@ -188,8 +188,8 @@ def urban_caption(configurations):
             configurations['support'] = filter_feature(configurations['support'], configurations['subject']['dc_title'])
         caption.append({'type': 'string', 'value': configurations['subject']['dc_title']})
     if 'support' in configurations and configurations['support']:
-        if 'subject' in configurations:
-            caption.append({'type': 'string', 'value': 'photographed'})
+        #if 'subject' in configurations:
+        #    caption.append({'type': 'string', 'value': 'photographed'})
         support_configuration = urban_best_support(configurations['support'])
         if support_configuration:
             caption.append(support_configuration)
@@ -198,13 +198,13 @@ def urban_caption(configurations):
                     caption.extend(urban_best_relative(configurations['relative']))
         else:
             if 'relative' in configurations and configurations['relative']:
-                if 'subject' in configurations:
-                    caption.append({'type': 'string', 'value': 'photographed'})
+                #if 'subject' in configurations:
+                #    caption.append({'type': 'string', 'value': 'photographed'})
                 caption.extend(urban_best_relative(configurations['relative']))
     else:
         if 'relative' in configurations and configurations['relative']:
-            if 'subject' in configurations:
-                caption.append({'type': 'string', 'value': 'photographed'})
+            #if 'subject' in configurations:
+            #    caption.append({'type': 'string', 'value': 'photographed'})
             caption.extend(urban_best_relative(configurations['relative']))
     if 'contain' in configurations and configurations['contain']:
         area_added = False
