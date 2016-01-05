@@ -54,11 +54,14 @@ def point_caption(args):
     if args.subject:
         caption.insert(0, {'dc_type': 'string', 'value': args.subject})
     rendered_caption = language.generate_caption(caption)
-    for element in caption:
-        if 'toponym' in element and 'osm_geometry' in element['toponym']:
-            element['toponym']['osm_geometry'] = wkt.dumps(element['toponym']['osm_geometry'])
-    print(json.dumps({'caption': rendered_caption,
-                      'source': caption}))
+    if args.full:
+        for element in caption:
+            if 'toponym' in element and 'osm_geometry' in element['toponym']:
+                element['toponym']['osm_geometry'] = wkt.dumps(element['toponym']['osm_geometry'])
+        print(json.dumps({'caption': rendered_caption,
+                          'source': caption}))
+    else:
+        print(rendered_caption)
 
 
 def main():
@@ -77,6 +80,7 @@ def main():
     sub_parser.add_argument('lon', help='Point longitude')
     sub_parser.add_argument('lat', help='Point latitude')
     sub_parser.add_argument('--subject', help='Image subject')
+    sub_parser.add_argument('--full', action='store_true', help='Output the full caption and source data')
     args = parser.parse_args()
     if args.v:
         logging.root.setLevel(logging.INFO)
