@@ -6,8 +6,6 @@ from shapely import wkt
 from pycaptioner import configurations, generator, language
 from pycaptioner.gazetteer import *
 
-logging.root.setLevel(logging.DEBUG)
-
 RURAL_ONE_POINT_MODELS = ['near.rural', 'east.rural', 'north.rural', 'west.rural', 'south.rural']
 URBAN_ONE_POINT_MODELS = ['at_corner.urban', 'at.urban', 'next_to.urban', 'near.urban']
 RURAL_TWO_POINT_MODELS = ['between.rural']
@@ -27,7 +25,7 @@ def main():
         gaz = VladGazetteer(in_f)
     configs = configurations.generate_configurations(point, gaz, args.category)
     if args.subject:
-            configurations['subject'] = {'dc_title': args.subject}
+            configs['subject'] = {'dc_title': args.subject}
     if args.category == 'rural':
         caption = generator.rural_caption(configs)
     else:
