@@ -27,7 +27,7 @@ MODELS = {'urban': [(model_name, models.load(model_name)) for model_name in ['at
                                                                              'south.rural']]}
 PROJ = Proj(init='epsg:3857')
 DISTANCE_WEIGHTS = {'dist': 0.3, 'error': 0.1, 'name': 0.2, 'type': 0.1, 'flickr': 0.3}
-SALIENCE_WEIGHTS = {'dist': 0.05, 'error': 0.3, 'name': 0.3, 'type': 0.05, 'flickr': 0.3}
+SALIENCE_WEIGHTS = {'dist': 0.05, 'error': 0.05, 'name': 0.4, 'type': 0.1, 'flickr': 0.4}
 
 
 def max_distance(point, other):
