@@ -100,6 +100,11 @@ def filter_by_max_distance(point, toponyms, limit):
     return [toponym for toponym in toponyms if max_distance(point, toponym['osm_geometry']) < limit]
 
 
+def filter_by_min_distance(point, toponyms, limit):
+    """Filter all toponyms that are less than the limit distance from the point."""
+    return [toponym for toponym in toponyms if point.distance(toponym['osm_geometry']) >= limit]
+
+
 def filter_by_score(point, toponyms, limit, weights):
     """Filter all toponyms that have a score lower than limit.""" 
     dist, error_dist = distance_limits(point, toponyms)
@@ -246,7 +251,7 @@ def generate_caption(sqlalchemy_url, point, filter_names=None):
             caption.append(toponym)
             models = filter_models(models, toponym['preposition'])
             toponyms = sort(point,
-                            filter_by_max_distance(point,
+                            filter_by_min_distance(point,
                                                    filter_by_score(point,
                                                                    filter_by_names(toponyms, names),
                                                                    toponym_score(point,
