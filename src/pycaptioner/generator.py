@@ -246,13 +246,15 @@ def generate_caption(sqlalchemy_url, point, filter_names=None):
             caption.append(toponym)
             models = filter_models(models, toponym['preposition'])
             toponyms = sort(point,
-                            filter_by_score(point,
-                                            filter_by_names(toponyms, names),
-                                            toponym_score(point,
-                                                          caption[-1]['toponym'],
-                                                          SALIENCE_WEIGHTS,
-                                                          toponyms=toponyms),
-                                            SALIENCE_WEIGHTS),
+                            filter_by_max_distance(point,
+                                                   filter_by_score(point,
+                                                                   filter_by_names(toponyms, names),
+                                                                   toponym_score(point,
+                                                                                 caption[-1]['toponym'],
+                                                                                 SALIENCE_WEIGHTS,
+                                                                                 toponyms=toponyms),
+                                                                   SALIENCE_WEIGHTS),
+                                                   point.distance(caption[-1]['toponym']['osm_geometry'])),
                             SALIENCE_WEIGHTS)
         else:
             toponyms = []
