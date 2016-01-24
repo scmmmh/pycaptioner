@@ -1,4 +1,5 @@
 import json
+import sys
 
 from argparse import ArgumentParser
 from shapely import wkt
@@ -33,12 +34,22 @@ def main():
     rendered_caption = language.generate_caption(caption)
     for element in caption:
         if 'feature' in element:
-            if 'geo_type' in element['feature']:
-                element['feature']['geo_type'] = {'main': element['feature']['geo_type'].main_type,
-                                                  'sub': element['feature']['geo_type'].sub_type,
-                                                  'urban_score': element['feature']['geo_type'].urban_score,
-                                                  'rural_score': element['feature']['geo_type'].rural_score}
-            if 'geo_lonlat' in element['feature'] and element['feature']['geo_lonlat']:
-                element['feature']['geo_lonlat'] = wkt.dumps(element['feature']['geo_lonlat'])
+            if isinstance(element['feature'], list):
+                for part in element['feature']:
+                    if 'geo_type' in part:
+                        part['geo_type'] = {'main': part['geo_type'].main_type,
+                                            'sub': part['geo_type'].sub_type,
+                                            'urban_score': part['geo_type'].urban_score,
+                                            'rural_score': part['geo_type'].rural_score}
+                    if 'geo_lonlat' in part and part['geo_lonlat']:
+                        part['geo_lonlat'] = wkt.dumps(part['geo_lonlat'])
+            else:
+                if 'geo_type' in element['feature']:
+                    element['feature']['geo_type'] = {'main': element['feature']['geo_type'].main_type,
+                                                      'sub': element['feature']['geo_type'].sub_type,
+                                                      'urban_score': element['feature']['geo_type'].urban_score,
+                                                      'rural_score': element['feature']['geo_type'].rural_score}
+                if 'geo_lonlat' in element['feature'] and element['feature']['geo_lonlat']:
+                    element['feature']['geo_lonlat'] = wkt.dumps(element['feature']['geo_lonlat'])
     print(json.dumps({'caption': rendered_caption,
                       'source': caption}))
