@@ -188,6 +188,7 @@ def filter_models(models, filter_name):
 
 def add_toponym_element(point, toponyms, models):
     """Determine whether there is a toponym to be added to the caption and return that."""
+    # Todo: Need to make sure that the "at" model is only used with point geometries
     for toponym in toponyms:
         geom = closest_point(point, toponym['osm_geometry'])
         for model_name, model in models:

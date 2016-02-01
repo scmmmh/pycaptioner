@@ -18,13 +18,13 @@ def needs_determiner(toponym):
             return True
         elif 'republic' in toponym['dc_title'].lower():
             return True
-        elif toponym['dc_title'].lower().endswith('s'):
+        elif toponym['dc_title'].lower().endswith('s'): # Todo: This should only apply to country-level toponyms
             return True
         return False
     elif filters.type_match(toponym['dc_type'], ['AREA', 'CEREMONIAL']):
         return False
     elif filters.type_match(toponym['dc_type'], ['NATURAL FEATURE', 'WATER', 'FLOWING WATER']):
-        return False
+        return True
     elif filters.type_match(toponym['dc_type'], ['NATURAL FEATURE']):
         return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
@@ -46,6 +46,8 @@ def add_determiner(toponym):
 
 
 def generate_toponym(toponym):
+    # Todo: Need to handle some things specially such as bus-stops, where the toponym type shouuld be output as well. Need to check what other cases there are for this.
+    # Also with rivers perhaps, if they do not include the "River" word in the toponym, but might need other exceptions such as "wash" or "creek", so might not be doable
     if toponym['dc_title'].endswith(' CP'):
         toponym['dc_title'] = '%s Parish' % toponym['dc_title'][:-3]
     if ' in ' in toponym['dc_title']:
@@ -72,7 +74,7 @@ def generate_phrase(element, last_preposition):
             return 'south', ' south of %s' % (generate_toponym(element['toponym']))
         elif element['preposition'].startswith('west.'):
             return 'west', ' west of %s' % (generate_toponym(element['toponym']))
-        elif element['preposition'] == 'in':
+        elif element['preposition'] == 'in': # Todo: Distinguish between containment (in) and support (on) scenarios (rivers, lakes, bridges)
             if last_preposition == 'in':
                 return 'in', ', %s' % (generate_toponym(element['toponym']))
             else:
