@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""
+"""
 
 .. moduleauthor:: Mark Hall <mark.hall@mail.room3b.eu>
 """
@@ -7,6 +7,7 @@ from osmgaz import filters
 
 
 def needs_determiner(toponym):
+    """A set of rules to determine whether the given toponym needs a definite article."""
     if toponym['dc_title'].lower().startswith('the'):
         return False
     elif filters.type_match(toponym['dc_type'], ['PLACE']):
@@ -18,14 +19,21 @@ def needs_determiner(toponym):
             return True
         elif 'republic' in toponym['dc_title'].lower():
             return True
-        elif toponym['dc_title'].lower().endswith('s'): # Todo: This should only apply to country-level toponyms
+        elif 'borough' in toponym['dc_title'].lower():
             return True
+        elif toponym['dc_title'].lower().endswith('s'):
+            if filters.type_match(toponym['dc_type'], ['AREA', 'ADMINISTRATIVE', '2']):
+                return True
+            elif filters.type_match(toponym['dc_type'], ['AREA', 'ADMINISTRATIVE', '4']):
+                return True
         return False
     elif filters.type_match(toponym['dc_type'], ['AREA', 'CEREMONIAL']):
         return False
-    elif filters.type_match(toponym['dc_type'], ['NATURAL FEATURE', 'WATER', 'FLOWING WATER']):
+    elif filters.type_match(toponym['dc_type'], ['NATURAL FEATURE', 'WATER', 'FLOWING']):
         return True
     elif filters.type_match(toponym['dc_type'], ['NATURAL FEATURE']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'STANDING WATER', 'RESERVOIR']):
         return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
         return False
@@ -33,28 +41,65 @@ def needs_determiner(toponym):
         return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'EDUCATION']):
         return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'TRANSPORT', 'AIR', 'TERMINAL']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'TRANSPORT', 'RAILWAY', 'STATION']):
+        return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'PARK']):
+        return False
+    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'COMMERCIAL']):
         return False
     return True
 
 
-def add_determiner(toponym):
-    if needs_determiner(toponym):
-        return 'the %s' % toponym['dc_title']
-    else:
-        return toponym['dc_title']
+CLASSIFY_TYPES = [['ARTIFICIAL FEATURE', 'TRANSPORT', 'PUBLIC', 'BUS STOP'],
+                  ['ARTIFICIAL FEATURE', 'TRANSPORT', 'RAILWAY', 'STATION']]
+
+
+def needs_toponym_type(toponym):
+    """Test whether the toponym type should be added to the toponym."""
+    for classify_type in CLASSIFY_TYPES:
+        if filters.type_match(toponym['dc_type'], classify_type) and classify_type[-1].lower() not in toponym['dc_title'].lower():
+            return classify_type[-1]
+    return False
 
 
 def generate_toponym(toponym):
-    # Todo: Need to handle some things specially such as bus-stops, where the toponym type shouuld be output as well. Need to check what other cases there are for this.
-    # Also with rivers perhaps, if they do not include the "River" word in the toponym, but might need other exceptions such as "wash" or "creek", so might not be doable
+    """Generate the toponym text, applying OSM-specific cleanups first."""
     if toponym['dc_title'].endswith(' CP'):
         toponym['dc_title'] = '%s Parish' % toponym['dc_title'][:-3]
+    if toponym['dc_title'].endswith(', opp'):
+        toponym['dc_title'] = toponym['dc_title'][:toponym['dc_title'].find(', opp')]
     if ' in ' in toponym['dc_title']:
         toponym['dc_title'] = toponym['dc_title'].replace(' in ', ', ')
-    return add_determiner(toponym)
+    label = toponym['dc_title']
+    if needs_toponym_type(toponym):
+        label = '%s %s' % (label, needs_toponym_type(toponym).lower())
+    if needs_determiner(toponym):
+        label = 'the %s' % (label)
+    return label
+
+
+SUPPORT_TYPES = [['NATURAL FEATURE', 'WATER'],
+                 ['NATURAL FEATURE', 'BEACH'],
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'FLOWING WATER', 'CANAL'],
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'FLOWING WATER', 'VIADUCT'],
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'STANDING WATER', 'DAM'],
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'STANDING WATER', 'RESERVOIR'],
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'RAILWAY', 'BRIDGE']]
+
+
+def containment_support(toponym):
+    """Returns either 'in' or 'on' depending on whether the toponym demands a containment preoposition
+    or a support preposition."""
+    for support_type in SUPPORT_TYPES:
+        if filters.type_match(toponym['dc_type'], support_type):
+            return 'on'
+    return 'in'
+
 
 def generate_phrase(element, last_preposition):
+    """Generate a single phrase as part of a larger caption."""
     if element['dc_type'] == 'preposition':
         if element['preposition'].startswith('at_corner.'):
             return 'at', ' at the corner of %s' % (element['toponym']['dc_title'])
@@ -74,11 +119,12 @@ def generate_phrase(element, last_preposition):
             return 'south', ' south of %s' % (generate_toponym(element['toponym']))
         elif element['preposition'].startswith('west.'):
             return 'west', ' west of %s' % (generate_toponym(element['toponym']))
-        elif element['preposition'] == 'in': # Todo: Distinguish between containment (in) and support (on) scenarios (rivers, lakes, bridges)
-            if last_preposition == 'in':
-                return 'in', ', %s' % (generate_toponym(element['toponym']))
+        elif element['preposition'] == 'in':
+            preposition = containment_support(element['toponym'])
+            if last_preposition == preposition:
+                return preposition, ', %s' % (generate_toponym(element['toponym']))
             else:
-                return 'in', ' in %s' % (generate_toponym(element['toponym']))
+                return preposition, ' %s %s' % (preposition, generate_toponym(element['toponym']))
         elif element['preposition'].startswith('on.'):
             return 'on', ' on %s' % (generate_toponym(element['toponym']))
     elif element['dc_type'] == 'string':
@@ -87,6 +133,7 @@ def generate_phrase(element, last_preposition):
 
 
 def generate_caption(elements):
+    """Generate a full caption."""
     phrases = []
     last_preposition = None
     for element in elements:
