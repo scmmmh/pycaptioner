@@ -53,7 +53,8 @@ def needs_determiner(toponym):
 
 
 CLASSIFY_TYPES = [['ARTIFICIAL FEATURE', 'TRANSPORT', 'PUBLIC', 'BUS STOP'],
-                  ['ARTIFICIAL FEATURE', 'TRANSPORT', 'RAILWAY', 'STATION']]
+                  ['ARTIFICIAL FEATURE', 'TRANSPORT', 'RAILWAY', 'STATION'],
+                  ['ARTIFICIAL FEATURE', 'TRANSPORT', 'PARKING', 'CAR']]
 
 
 def needs_toponym_type(toponym):
