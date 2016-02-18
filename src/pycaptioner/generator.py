@@ -26,8 +26,9 @@ MODELS = {'urban': [(model_name, models.load(model_name)) for model_name in ['at
                                                                              'west.rural',
                                                                              'south.rural']]}
 PROJ = Proj(init='epsg:3857')
+ROAD_WEIGHTS = {'dist': 1, 'error': 0, 'name': 0, 'type': 0, 'flickr': 0}
 DISTANCE_WEIGHTS = {'dist': 0.3, 'error': 0.1, 'name': 0.2, 'type': 0.1, 'flickr': 0.3}
-SALIENCE_WEIGHTS = {'dist': 0.05, 'error': 0.05, 'name': 0.4, 'type': 0.1, 'flickr': 0.4}
+SALIENCE_WEIGHTS = {'dist': 0.05, 'error': 0.05, 'name': 0.4, 'type': 0.05, 'flickr': 0.45}
 
 
 def max_distance(point, other):
@@ -235,8 +236,13 @@ def generate_caption(sqlalchemy_url, point, filter_names=None):
                     filter_by_max_distance(point,
                                            filter_by_names(geo_data['osm_proximal'], names),
                                            spatial_error),
-                    DISTANCE_WEIGHTS)
+                    ROAD_WEIGHTS)
     road = add_road_element(point, toponyms, models)
+    toponyms = sort(point,
+                    filter_by_max_distance(point,
+                                           filter_by_names(geo_data['osm_proximal'], names),
+                                           spatial_error),
+                    DISTANCE_WEIGHTS)
     if road:
         names.append(road['toponym']['dc_title'])
         caption.append(road)
