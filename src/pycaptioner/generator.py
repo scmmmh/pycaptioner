@@ -201,7 +201,7 @@ def add_toponym_element(point, toponyms, models):
             elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
                 continue
             score = model(point.x - geom.x, point.y - geom.y)
-            if score > 0.6:
+            if score >= 0.666:
                 return {'dc_type': 'preposition',
                         'preposition': model_name,
                         'toponym': toponym}
