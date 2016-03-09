@@ -37,10 +37,10 @@ def dist(x, y):
 class FixedDistanceModel(object):
     
     def __init__(self, config):
-        pass
+        self.limit = config.getint('Model', 'limit')
     
     def __call__(self, x, y):
-        if dist(x, y) <= 20:
+        if dist(x, y) <= self.limit:
             return 1
         else:
             return 0

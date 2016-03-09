@@ -13,22 +13,58 @@ from pycaptioner import models
 RURAL_TWO_POINT_MODELS = ['between.rural'] # Todo: Do something with these
 URBAN_TWO_POINT_MODELS = ['between.urban']
 
-MODELS = {'urban': [(model_name, models.load(model_name)) for model_name in ['at_corner.urban',
-                                                                             'on.universal',
-                                                                             'at.urban',
-                                                                             'next_to.universal',
-                                                                             'near.urban']],
-          'rural': [(model_name, models.load(model_name)) for model_name in ['on.universal',
-                                                                             'next_to.universal',
-                                                                             'near.rural',
-                                                                             'east.rural',
-                                                                             'north.rural',
-                                                                             'west.rural',
-                                                                             'south.rural']]}
+MODELS = {'urban': [(model_name, models.load(model_name), excludes)
+                    for model_name, excludes in [('at_corner.urban', ['at_corner.urban']),
+                                                 ('on.universal', ['at_corner.urban',
+                                                                   'on.universal']),
+                                                 ('at.urban', ['at_corner.urban',
+                                                               'on.universal',
+                                                               'at.urban']),
+                                                 ('next_to.universal', ['at_corner.urban',
+                                                                        'on.universal',
+                                                                        'at.urban',
+                                                                        'next_to.universal']),
+                                                 ('near.urban', ['at_corner.urban',
+                                                                 'on.universal',
+                                                                 'at.urban',
+                                                                 'next_to.universal',
+                                                                 'near.urban'])]],
+          'rural': [(model_name, models.load(model_name), excludes)
+                    for model_name, excludes in [('on.universal', ['on.universal']),
+                                                 ('next_to.universal', ['on.universal',
+                                                                        'next_to.universal']),
+                                                 ('near.rural', ['on.universal',
+                                                                 'next_to.universal',
+                                                                 'near.rural',
+                                                                 'east.rural',
+                                                                 'north.rural',
+                                                                 'west.rural',
+                                                                 'south.rural']),
+                                                 ('east.rural', ['on.universal',
+                                                                 'next_to.universal',
+                                                                 'near.rural',
+                                                                 'east.rural',
+                                                                 'west.rural']),
+                                                 ('north.rural', ['on.universal',
+                                                                  'next_to.universal',
+                                                                  'near.rural',
+                                                                  'north.rural',
+                                                                  'south.rural']),
+                                                 ('west.rural', ['on.universal',
+                                                                 'next_to.universal',
+                                                                 'near.rural',
+                                                                 'east.rural',
+                                                                 'west.rural']),
+                                                 ('south.rural', ['on.universal',
+                                                                  'next_to.universal',
+                                                                  'near.rural',
+                                                                  'north.rural',
+                                                                  'south.rural'])]]}
 PROJ = Proj(init='epsg:3857')
 ROAD_WEIGHTS = {'dist': 1, 'error': 0, 'name': 0, 'type': 0, 'flickr': 0}
-DISTANCE_WEIGHTS = {'dist': 0.3, 'error': 0.1, 'name': 0.2, 'type': 0.1, 'flickr': 0.3}
-SALIENCE_WEIGHTS = {'dist': 0.05, 'error': 0.05, 'name': 0.4, 'type': 0.05, 'flickr': 0.45}
+DISTANCE_WEIGHTS = {'rural': {'dist': 0.45, 'error': 0.15, 'name': 0.05, 'type': 0.05, 'flickr': 0.3},
+                    'urban': {'dist': 0.55, 'error': 0.05, 'name': 0.05, 'type': 0.05, 'flickr': 0.3}}
+SALIENCE_WEIGHTS = {'dist': 0.1, 'error': 0, 'name': 0.05, 'type': 0.05, 'flickr': 0.8}
 
 
 def max_distance(point, other):
@@ -55,12 +91,22 @@ def distance_limits(point, toponyms):
     return (dist, error_dist)
 
 
-def toponym_score(point, toponym, weights, dist=None, error_dist=None, toponyms=None):
+def flickr_normalisation(toponyms):
+    """Calculate the minimum and maximum normalisation values for Flickr data."""
+    if toponyms:
+        counts = [toponym['osm_salience']['flickr'] if 'osm_salience' in toponym and 'flickr' in toponym['osm_salience'] else 0 for toponym in toponyms]
+        return (min(counts), max(counts))
+    else:
+        return (0, 0)
+
+
+def toponym_score(point, toponym, weights, dist=None, error_dist=None, flickr_norm=None, toponyms=None):
     """Calculate the score for the toponym given the weights. Must specify either
     dist and error_dist or toponyms. In the case of specifying toponyms, will autoamtically
     calculate dist and error_dist."""
     if toponyms:
         dist, error_dist = distance_limits(point, toponyms)
+        flickr_norm = flickr_normalisation(toponyms)
     if dist[1] == 0:
         dist_score = 1
     else:
@@ -79,7 +125,10 @@ def toponym_score(point, toponym, weights, dist=None, error_dist=None, toponyms=
         else:
             type_score = 0
         if 'flickr' in toponym['osm_salience']:
-            flickr_score = float(toponym['osm_salience']['flickr']) * weights['type']
+            if flickr_norm[1] > 0:
+                flickr_score = (float(toponym['osm_salience']['flickr'] - flickr_norm[0]) / flickr_norm[1]) * weights['flickr']
+            else:
+                flickr_score = float(toponym['osm_salience']['flickr']) * weights['flickr']
         else:
             flickr_score = 0
         score = dist_score + error_score + name_score + type_score + flickr_score
@@ -91,8 +140,9 @@ def toponym_score(point, toponym, weights, dist=None, error_dist=None, toponyms=
 def sort_key(point, toponyms, weights):
     """Generates a function used to calculate sorting keys for sorting toponyms."""
     dist, error_dist = distance_limits(point, toponyms)
+    flickr_norm = flickr_normalisation(toponyms)
     def score(toponym):
-        return toponym_score(point, toponym, weights, dist=dist, error_dist=error_dist)
+        return toponym_score(point, toponym, weights, dist=dist, error_dist=error_dist, flickr_norm=flickr_norm)
     return score
 
 
@@ -109,13 +159,19 @@ def filter_by_min_distance(point, toponyms, limit):
 def filter_by_score(point, toponyms, limit, weights):
     """Filter all toponyms that have a score lower than limit.""" 
     dist, error_dist = distance_limits(point, toponyms)
+    flickr_norm = flickr_normalisation(toponyms)
     return [toponym for toponym in toponyms
-            if toponym_score(point, toponym, weights, dist=dist, error_dist=error_dist) > limit]
+            if toponym_score(point, toponym, weights, dist=dist, error_dist=error_dist, flickr_norm=flickr_norm) > limit]
 
 
 def filter_by_names(toponyms, names):
     """Filter all toponyms that share an already-used name."""
     return [toponym for toponym in toponyms if toponym['dc_title'] not in names]
+
+
+def filter_by_type(toponyms, dc_type):
+    """Filter all toponyms that have the same type or a sub-type."""
+    return [toponym for toponym in toponyms if not filters.type_match(toponym['dc_type'], dc_type)]
 
 
 def sort(point, toponyms, weights):
@@ -160,7 +216,7 @@ def add_road_element(point, toponyms, models):
     for toponym in toponyms:
         if filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
             geom = closest_point(point, toponym['osm_geometry'])
-            for model_name, model in models:
+            for model_name, model, _ in models:
                 if filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD', 'JUNCTION']):
                     if model_name.startswith('at_corner.'):
                         if model(point.x - geom.x, point.y - geom.y) > 0.6:
@@ -183,7 +239,7 @@ def filter_models(models, filter_name):
         for name in filter_name:
             models = filter_models(models, name)
     else:
-        models = [(name, model) for (name, model) in models if not name.startswith(filter_name)]
+        models = [(name, model, excludes) for (name, model, excludes) in models if not name.startswith(filter_name)]
     return models
 
 
@@ -191,7 +247,7 @@ def add_toponym_element(point, toponyms, models):
     """Determine whether there is a toponym to be added to the caption and return that."""
     for toponym in toponyms:
         geom = closest_point(point, toponym['osm_geometry'])
-        for model_name, model in models:
+        for model_name, model, _ in models:
             if model_name.startswith('on.') and not filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
                 continue
             elif model_name.startswith('at_corner.') and not filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD', 'JUNCTION']):
@@ -201,30 +257,19 @@ def add_toponym_element(point, toponyms, models):
             elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
                 continue
             score = model(point.x - geom.x, point.y - geom.y)
-            if score >= 0.666:
+            if model_name.startswith('near.') and 'osm_salience' in toponym and 'flickr' in toponym['osm_salience'] and toponym['osm_salience']['flickr'] >= 1000:
+                score_limit = 0.5
+            else:
+                score_limit = 0.66666
+            if score >= score_limit:
                 return {'dc_type': 'preposition',
                         'preposition': model_name,
                         'toponym': toponym}
 
 
-def normalise_flickr(geo_data):
-    """Normalise the Flickr counts."""
-    max_flickr = 0
-    for toponym in geo_data['osm_proximal']:
-        if 'osm_salience' in toponym and 'flickr' in toponym['osm_salience']:
-            max_flickr = max(max_flickr, toponym['osm_salience']['flickr'])
-    if max_flickr > 0:
-        for toponym in geo_data['osm_proximal']:
-            if 'osm_salience' in toponym and 'flickr' in toponym['osm_salience']:
-                toponym['osm_salience']['flickr']= toponym['osm_salience']['flickr'] / max_flickr
-    return geo_data
-
-
-
 def generate_caption(sqlalchemy_url, point, filter_names=None):
     """Generate a caption for the given point."""
     geo_data = load_geodata(sqlalchemy_url, point)
-    geo_data = normalise_flickr(geo_data)
     point = Point(*PROJ(*point))
     caption = []
     spatial_error = max_distance(point, geo_data['osm_containment'][0]['osm_geometry'])
@@ -238,26 +283,23 @@ def generate_caption(sqlalchemy_url, point, filter_names=None):
                                            spatial_error),
                     ROAD_WEIGHTS)
     road = add_road_element(point, toponyms, models)
-    toponyms = sort(point,
-                    filter_by_max_distance(point,
-                                           filter_by_names(geo_data['osm_proximal'], names),
-                                           spatial_error),
-                    DISTANCE_WEIGHTS)
     if road:
         names.append(road['toponym']['dc_title'])
         caption.append(road)
         spatial_error = max_distance(point, road['toponym']['osm_geometry'])
         models = filter_models(models, ['at_corner.', 'on.'])
-        toponyms = sort(point,
-                        filter_by_max_distance(point,
-                                               filter_by_names(toponyms, names),
-                                               spatial_error),
-                        DISTANCE_WEIGHTS)
+    toponyms = filter_by_type(toponyms, ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD'])
+    toponyms = sort(point,
+                    filter_by_max_distance(point,
+                                           filter_by_names(toponyms, names),
+                                           spatial_error),
+                    DISTANCE_WEIGHTS[urban_rural(geo_data, point)])
     while len(toponyms) > 0 and len(models) > 0:
         toponym = add_toponym_element(point, toponyms, models)
         if toponym:
             caption.append(toponym)
-            models = filter_models(models, toponym['preposition'])
+            
+            models = filter_models(models, [excludes for model_name, _, excludes in models if model_name.startswith(toponym['preposition'])][0])
             toponyms = sort(point,
                             filter_by_min_distance(point,
                                                    filter_by_score(point,
