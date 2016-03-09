@@ -40,7 +40,6 @@ def eval_test(args):
             caption = generator.generate_caption(args.sqlalchemy_url, point, filter_names=[line['subject']])
             caption.insert(0, {'dc_type': 'string', 'value': line['subject']})
             caption = language.generate_caption(caption)
-            print(caption)
             captions.append(caption)
     for c in captions:
         print(c)

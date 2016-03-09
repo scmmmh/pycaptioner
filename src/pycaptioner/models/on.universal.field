@@ -3,3 +3,4 @@ name = on.universal
 
 [Model]
 type=fixed.distance
+limit=10
