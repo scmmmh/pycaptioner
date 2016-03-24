@@ -258,7 +258,7 @@ def add_toponym_element(point, toponyms, models):
                 continue
             score = model(point.x - geom.x, point.y - geom.y)
             if model_name.startswith('near.') and 'osm_salience' in toponym and 'flickr' in toponym['osm_salience'] and toponym['osm_salience']['flickr'] >= 1000:
-                score_limit = 0.5
+                score_limit = 0.4
             else:
                 score_limit = 0.66666
             if score >= score_limit:
@@ -290,15 +290,16 @@ def generate_caption(sqlalchemy_url, point, filter_names=None):
         models = filter_models(models, ['at_corner.', 'on.'])
     toponyms = filter_by_type(toponyms, ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD'])
     if filters.type_match(geo_data['osm_containment'][0]['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING']):
-        toponyms = sort(point,
-                        filter_by_score(point,
-                                        filter_by_names(toponyms, names),
-                                        toponym_score(point,
-                                                      geo_data['osm_containment'][0],
-                                                      SALIENCE_WEIGHTS,
-                                                      toponyms=toponyms),
-                                        SALIENCE_WEIGHTS),
-                        SALIENCE_WEIGHTS)
+        if toponyms:
+            toponyms = sort(point,
+                            filter_by_score(point,
+                                            filter_by_names(toponyms, names),
+                                            toponym_score(point,
+                                                          geo_data['osm_containment'][0],
+                                                          SALIENCE_WEIGHTS,
+                                                          toponyms=toponyms),
+                                            SALIENCE_WEIGHTS),
+                            SALIENCE_WEIGHTS)
         caption.append({'dc_type': 'preposition',
                         'preposition': 'in',
                         'toponym': geo_data['osm_containment'][0]})
@@ -329,7 +330,5 @@ def generate_caption(sqlalchemy_url, point, filter_names=None):
         else:
             toponyms = []
     caption.extend([{'dc_type': 'preposition','preposition': 'in',
-                     'toponym': {'dc_title': toponym['dc_title'],
-                                 'dc_type': toponym['dc_type'],
-                                 'osm_geometry': toponym['osm_geometry']}} for toponym in geo_data['osm_containment'][:-1]])
+                     'toponym': toponym} for toponym in geo_data['osm_containment'][:-1]])
     return caption

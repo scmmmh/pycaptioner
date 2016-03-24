@@ -49,6 +49,8 @@ def needs_determiner(toponym):
         return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'COMMERCIAL']):
         return False
+    elif 'osm_salience' in toponym and 'flickr' in toponym['osm_salience'] and toponym['osm_salience']['flickr'] > 1000:
+        return False
     return True
 
 
@@ -87,7 +89,9 @@ SUPPORT_TYPES = [['NATURAL FEATURE', 'WATER'],
                  ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'FLOWING WATER', 'VIADUCT'],
                  ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'STANDING WATER', 'DAM'],
                  ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'STANDING WATER', 'RESERVOIR'],
-                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'RAILWAY', 'BRIDGE']]
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'RAILWAY', 'BRIDGE'],
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD'],
+                 ['ARTIFICIAL FEATURE', 'TRANSPORT', 'PATH']]
 
 
 def containment_support(toponym):
