@@ -18,6 +18,7 @@ def local_test(args):
               (-2.04045, 53.34058),  # Lyme Park
               (-2.47429, 53.3827),   # Lymm
               (-1.47876, 53.38033),  # Sheffield
+              (-3.16338, 51.46473),  # Cardiff Bay
               ]
     captions = []
     for point in points:
