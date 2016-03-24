@@ -289,11 +289,26 @@ def generate_caption(sqlalchemy_url, point, filter_names=None):
         spatial_error = max_distance(point, road['toponym']['osm_geometry'])
         models = filter_models(models, ['at_corner.', 'on.'])
     toponyms = filter_by_type(toponyms, ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD'])
-    toponyms = sort(point,
-                    filter_by_max_distance(point,
-                                           filter_by_names(toponyms, names),
-                                           spatial_error),
-                    DISTANCE_WEIGHTS[urban_rural(geo_data, point)])
+    if filters.type_match(geo_data['osm_containment'][0]['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING']):
+        toponyms = sort(point,
+                        filter_by_score(point,
+                                        filter_by_names(toponyms, names),
+                                        toponym_score(point,
+                                                      geo_data['osm_containment'][0],
+                                                      SALIENCE_WEIGHTS,
+                                                      toponyms=toponyms),
+                                        SALIENCE_WEIGHTS),
+                        SALIENCE_WEIGHTS)
+        caption.append({'dc_type': 'preposition',
+                        'preposition': 'in',
+                        'toponym': geo_data['osm_containment'][0]})
+        geo_data['osm_containment'] = geo_data['osm_containment'][1:]
+    else:
+        toponyms = sort(point,
+                        filter_by_max_distance(point,
+                                               filter_by_names(toponyms, names),
+                                               spatial_error),
+                        DISTANCE_WEIGHTS[urban_rural(geo_data, point)])
     while len(toponyms) > 0 and len(models) > 0:
         toponym = add_toponym_element(point, toponyms, models)
         if toponym:

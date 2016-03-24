@@ -96,6 +96,8 @@ def containment_support(toponym):
     for support_type in SUPPORT_TYPES:
         if filters.type_match(toponym['dc_type'], support_type):
             return 'on'
+    if filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING']):
+        return 'at'
     return 'in'
 
 
