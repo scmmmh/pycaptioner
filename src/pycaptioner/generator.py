@@ -3,12 +3,15 @@ u"""
 
 .. moduleauthor:: Mark Hall <mark.hall@edgehill.ac.uk>
 """
+from logging import getLogger
 from osmgaz import OSMGaz, filters
 from pyproj import Proj
 from shapely.geometry import Point, MultiLineString, LineString, Polygon
 from shapely import wkt
 
 from pycaptioner import models
+
+logger = getLogger('pycaptioner')
 
 RURAL_TWO_POINT_MODELS = ['between.rural'] # Todo: Do something with these
 URBAN_TWO_POINT_MODELS = ['between.urban']
@@ -182,9 +185,9 @@ def sort(point, toponyms, weights):
     return toponyms
 
 
-def load_geodata(sqlalchemy_url, point):
+def load_geodata(sqlalchemy_url, point, callback):
     """Load the geo-data from the gazetteer."""
-    gaz = OSMGaz(sqlalchemy_url)
+    gaz = OSMGaz(sqlalchemy_url, callback=callback)
     geo_data = gaz(point)
     for toponym in geo_data['osm_proximal']:
         toponym['osm_geometry'] = wkt.loads(toponym['osm_geometry'])
@@ -267,13 +270,19 @@ def add_toponym_element(point, toponyms, models):
                         'toponym': toponym}
 
 
-def generate_caption(sqlalchemy_url, point, filter_names=None):
+def generate_caption(sqlalchemy_url, point, filter_names=None, callback=None):
     """Generate a caption for the given point."""
-    geo_data = load_geodata(sqlalchemy_url, point)
+    if callback is not None:
+        callback('Loading location data')
+    geo_data = load_geodata(sqlalchemy_url, point, callback)
     point = Point(*PROJ(*point))
     caption = []
     spatial_error = max_distance(point, geo_data['osm_containment'][0]['osm_geometry'])
+    if callback is not None:
+        callback('Loading preposition models')
     models = MODELS[urban_rural(geo_data, point)]
+    if callback is not None:
+        callback('Generating a location description')
     names = [t['dc_title'] for t in geo_data['osm_containment']]
     if filter_names is not None:
         names.extend(filter_names)
