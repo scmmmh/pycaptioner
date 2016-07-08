@@ -1,3 +1,8 @@
+0.1.2
+-----
+
+- *BUGFIX*: Correct a problem with the R variogram function call.
+
 0.1.1
 -----
 
