@@ -145,9 +145,9 @@ class KrigingModel(object):
             fml.environment['conf'] = data[2]
             v = robjects.r.variogram(fml, data2)
             vgm = robjects.r.vgm(model=config.get('Model', 'name'),
-                                 nugget=config.get('Model', 'nugget'),
-                                 range=config.get('Model', 'range'),
-                                 psill=config.get('Model', 'sill'))
+                                 nugget=int(config.get('Model', 'nugget')),
+                                 range=int(config.get('Model', 'range')),
+                                 psill=int(config.get('Model', 'sill')))
             ovgm = robjects.r['fit.variogram'](v, vgm)
             krige = robjects.r.krige(robjects.Formula('confidence~1'), data2, spatial_grid, model=ovgm)
             robjects.r['write.asciigrid'](krige, '%s.ag' % (config.get('Meta', 'name')))
