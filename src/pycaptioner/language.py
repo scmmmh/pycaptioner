@@ -3,7 +3,12 @@
 
 .. moduleauthor:: Mark Hall <mark.hall@mail.room3b.eu>
 """
+import re
+
 from osmgaz import filters
+
+
+A_ROAD_PATTERN = re.compile('[ABC][0-9]+', re.IGNORECASE)
 
 
 def needs_determiner(toponym):
@@ -36,7 +41,10 @@ def needs_determiner(toponym):
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'WATER WAY', 'STANDING WATER', 'RESERVOIR']):
         return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'TRANSPORT', 'ROAD']):
-        return False
+        if re.match(A_ROAD_PATTERN, toponym['dc_title']):
+            return True
+        else:
+            return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'COMMERCIAL']):
         return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'EDUCATION']):
@@ -46,8 +54,6 @@ def needs_determiner(toponym):
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'TRANSPORT', 'RAILWAY', 'STATION']):
         return False
     elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'PARK']):
-        return False
-    elif filters.type_match(toponym['dc_type'], ['ARTIFICIAL FEATURE', 'BUILDING', 'COMMERCIAL']):
         return False
     elif 'osm_salience' in toponym and 'flickr' in toponym['osm_salience'] and toponym['osm_salience']['flickr'] > 1000:
         return False
